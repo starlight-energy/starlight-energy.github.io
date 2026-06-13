@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Su pedido — Starlight Energy Solutions</title>
+<meta name="description" content="Revise su pedido de equipos de energía y envíelo por WhatsApp. Entrega a domicilio disponible en Cárdenas.">
+<meta name="theme-color" content="#1c3667">
+<link rel="stylesheet" href="estilos.css">
+<link rel="icon" href="fotos/logo.png">
+
+<!-- ============================================================
+     CONFIGURACIÓN — EDITA SOLO ESTA SECCIÓN
+     1. TELEFONO: tu WhatsApp con código de país, sin + ni espacios.
+     2. HOJA_DOMICILIOS_URL: el link CSV de la pestaña "domicilios"
+        de tu Google Sheet (columnas: zona | costo). Se publica
+        igual que el inventario. Si lo dejas vacío, el costo del
+        domicilio se coordina por WhatsApp.
+     ============================================================ -->
+<script>
+const TELEFONO = "5363918876";
+const HOJA_DOMICILIOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxnw0FcODE_hE9vXjN1yd3sFDRrHKczwd_n9QOFYDbtytnuwSLoDzniT3bZc_xZEcLz4jM8BaK1NKF/pub?gid=1281006813&single=true&output=csv";
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">
+      <img src="fotos/logo.png" alt="Starlight Energy Solutions">
+      <strong>Starlight<small>Energy Solutions</small></strong>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Inicio</a></li>
+      <li><a href="catalogo.html">Catálogo</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="heroe contenedor" style="padding-bottom:24px">
+  <span class="eyebrow">Su pedido</span>
+  <h1 style="font-size:clamp(26px,6vw,36px)">Revise su pedido y envíelo por WhatsApp.</h1>
+</header>
+
+<main class="contenedor">
+
+  <div id="pedido-vacio" class="pedido-vacio" hidden>
+    <p>Todavía no ha agregado equipos a su pedido.</p>
+    <p style="margin-top:16px"><a class="btn btn-azul" href="catalogo.html">Ver el catálogo</a></p>
+  </div>
+
+  <div id="pedido-lleno" hidden>
+
+    <section style="border:0;padding:8px 0 0">
+      <h2 class="titulo">Equipos</h2>
+      <div id="lista-items"></div>
+    </section>
+
+    <section style="border:0;padding-top:24px">
+      <h2 class="titulo">Sus datos</h2>
+      <div class="campo">
+        <label for="nombre">Nombre y apellidos *</label>
+        <input type="text" id="nombre" autocomplete="name">
+      </div>
+      <div class="campo">
+        <label for="telefono">Teléfono / WhatsApp *</label>
+        <input type="tel" id="telefono" autocomplete="tel" inputmode="tel">
+      </div>
+
+      <label class="check"><input type="checkbox" id="quiere-domicilio"> Deseo entrega a domicilio</label>
+
+      <div id="bloque-domicilio" hidden>
+        <div class="campo" id="bloque-zona">
+          <label for="zona">Zona de entrega</label>
+          <select id="zona"><option>Cargando zonas…</option></select>
+        </div>
+        <div class="campo">
+          <label for="direccion">Dirección</label>
+          <textarea id="direccion" placeholder="Calle, número, entre calles, referencias…"></textarea>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="notas">Notas (opcional)</label>
+        <textarea id="notas" placeholder="Ej.: entregar después de las 5 PM"></textarea>
+      </div>
+    </section>
+
+    <section style="border:0;padding-top:8px">
+      <div class="totales">
+        <div class="fila"><span>Subtotal equipos</span><span id="t-subtotal">—</span></div>
+        <div class="fila" id="fila-domicilio" hidden><span>Entrega a domicilio</span><span id="t-domicilio">—</span></div>
+        <div class="fila total"><span>Total</span><span id="t-total">—</span></div>
+      </div>
+      <p class="nota-pago" id="nota-precios" hidden>* Algunos precios se confirman por WhatsApp y no están incluidos en el total.</p>
+      <p class="nota-pago">Pago en efectivo (USD) o Zelle. Le enviamos los datos al confirmar el pedido.</p>
+
+      <button type="button" id="enviar" class="btn btn-wa" style="width:100%;margin-top:16px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.5.5c-.1.1-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.4 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.4 0 .1 0 .7-.2 1.3z"/></svg>
+        <span>Enviar pedido por WhatsApp</span>
+      </button>
+      <p id="error-msg" class="nota-pago" style="color:var(--rojo);display:none"></p>
+      <p style="margin-top:18px;text-align:center"><a href="catalogo.html" style="color:var(--verde-hoja);font-weight:700;text-decoration:none;font-size:14.5px">← Seguir agregando equipos</a></p>
+    </section>
+
+  </div>
+</main>
+
+<footer class="contenedor">
+  <img class="logo-pie" src="fotos/logo.png" alt="Starlight Energy Solutions">
+  <p>Starlight Energy Solutions · Cárdenas, Matanzas · Entrega a domicilio disponible</p>
+</footer>
+
+<script src="carrito.js"></script>
+<script>
+(function(){
+  function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
+  function usd(n){ return (Math.round(n*100)/100).toLocaleString("en-US") + " USD"; }
+  function titulo(s){ return (s||"").replace(/\s+/g," ").trim().replace(/\b\w/g,function(c){return c.toUpperCase();}); }
+
+  var zonas = [];            // {nombre, costo}
+  var domicilioManual = false; // true = la hoja de zonas no cargó
+
+  var vacio = document.getElementById("pedido-vacio");
+  var lleno = document.getElementById("pedido-lleno");
+  var lista = document.getElementById("lista-items");
+  var chk   = document.getElementById("quiere-domicilio");
+
+  function pintar(){
+    var items = Carrito.items();
+    if(!items.length){ vacio.hidden=false; lleno.hidden=true; return; }
+    vacio.hidden=true; lleno.hidden=false;
+
+    lista.innerHTML="";
+    items.forEach(function(it){
+      var row=document.createElement("div");
+      row.className="linea-item";
+      var precioTxt = it.precio==null ? "Precio por WhatsApp" : usd(it.precio)+" c/u";
+      row.innerHTML=
+        '<div style="flex:1">'+
+          '<div class="li-nombre"></div>'+
+          '<div class="li-precio"></div>'+
+          '<button type="button" class="li-quitar">Quitar</button>'+
+        '</div>'+
+        '<div class="cantidad">'+
+          '<button type="button" class="qbtn" data-menos aria-label="Quitar uno">−</button>'+
+          '<input type="number" class="qinput" value="'+it.cantidad+'" min="1" inputmode="numeric" aria-label="Cantidad">'+
+          '<button type="button" class="qbtn" data-mas aria-label="Agregar uno">+</button>'+
+        '</div>';
+      row.querySelector(".li-nombre").textContent=it.nombre;
+      row.querySelector(".li-precio").textContent=precioTxt;
+      var input=row.querySelector(".qinput");
+      function fijar(v){ v=parseInt(v,10)||1; if(v<1)v=1; input.value=v; Carrito.fijarCantidad(it.id,v); totales(); }
+      row.querySelector("[data-menos]").addEventListener("click",function(){
+        var v=(parseInt(input.value,10)||1)-1;
+        if(v<1){ Carrito.quitar(it.id); pintar(); return; }
+        fijar(v);
+      });
+      row.querySelector("[data-mas]").addEventListener("click",function(){ fijar((parseInt(input.value,10)||1)+1); });
+      input.addEventListener("change",function(){ fijar(input.value); });
+      row.querySelector(".li-quitar").addEventListener("click",function(){ Carrito.quitar(it.id); pintar(); });
+      lista.appendChild(row);
+    });
+    totales();
+  }
+
+  function costoDomicilio(){
+    if(!chk.checked || domicilioManual) return 0;
+    var sel=document.getElementById("zona");
+    var v=parseFloat(sel.value);
+    return isNaN(v)?0:v;
+  }
+
+  function totales(){
+    var items=Carrito.items();
+    var sub=0, hayWA=false;
+    items.forEach(function(it){ if(it.precio==null) hayWA=true; else sub+=it.precio*it.cantidad; });
+    document.getElementById("t-subtotal").textContent=usd(sub);
+    document.getElementById("nota-precios").hidden=!hayWA;
+
+    var filaDom=document.getElementById("fila-domicilio");
+    var dom=costoDomicilio();
+    if(chk.checked){
+      filaDom.hidden=false;
+      document.getElementById("t-domicilio").textContent = domicilioManual ? "por coordinar" : usd(dom);
+    } else {
+      filaDom.hidden=true;
+    }
+    document.getElementById("t-total").textContent=usd(sub+dom);
+  }
+
+  chk.addEventListener("change",function(){
+    document.getElementById("bloque-domicilio").hidden=!chk.checked;
+    totales();
+  });
+  document.getElementById("zona").addEventListener("change",totales);
+
+  function cargarZonas(){
+    var bloqueZona=document.getElementById("bloque-zona");
+    if(!HOJA_DOMICILIOS_URL){ domicilioManual=true; bloqueZona.hidden=true; totales(); return; }
+    fetch(HOJA_DOMICILIOS_URL,{cache:"no-store"})
+      .then(function(r){ return r.text(); })
+      .then(function(csv){
+        csv.split(/\r?\n/).slice(1).forEach(function(l){
+          if(!l.trim()) return;
+          var c=l.split(",");
+          var nombre=titulo(c[0]);
+          var costo=parseFloat((c[1]||"").trim());
+          if(nombre && !isNaN(costo)) zonas.push({nombre:nombre,costo:costo});
+        });
+        if(!zonas.length){ domicilioManual=true; bloqueZona.hidden=true; totales(); return; }
+        var sel=document.getElementById("zona");
+        sel.innerHTML="";
+        zonas.forEach(function(z){
+          var o=document.createElement("option");
+          o.value=z.costo;
+          o.textContent=z.nombre+" (+"+usd(z.costo)+")";
+          o.setAttribute("data-nombre",z.nombre);
+          sel.appendChild(o);
+        });
+        totales();
+      })
+      .catch(function(){ domicilioManual=true; bloqueZona.hidden=true; totales(); });
+  }
+
+  document.getElementById("enviar").addEventListener("click",function(){
+    var err=document.getElementById("error-msg");
+    var nombre=document.getElementById("nombre");
+    var tel=document.getElementById("telefono");
+    [nombre,tel].forEach(function(el){ el.classList.remove("error-campo"); });
+
+    var faltan=[];
+    if(!nombre.value.trim()) faltan.push(nombre);
+    if(!tel.value.trim()) faltan.push(tel);
+    if(faltan.length){
+      faltan.forEach(function(el){ el.classList.add("error-campo"); });
+      err.textContent="Por favor complete su nombre y teléfono.";
+      err.style.display="block";
+      faltan[0].focus();
+      return;
+    }
+    err.style.display="none";
+
+    var items=Carrito.items();
+    if(!items.length) return;
+
+    var L=[];
+    L.push("Hola 👋 Quiero hacer un pedido en Starlight:");
+    L.push("");
+    var sub=0, hayWA=false;
+    items.forEach(function(it){
+      if(it.precio==null){ hayWA=true; L.push("• "+it.cantidad+"× "+it.nombre+" — precio por WhatsApp"); }
+      else { var lt=it.precio*it.cantidad; sub+=lt; L.push("• "+it.cantidad+"× "+it.nombre+" — "+usd(it.precio)+" c/u = "+usd(lt)); }
+    });
+    L.push("");
+    L.push("Subtotal: "+usd(sub));
+
+    var dom=0, zonaNombre="";
+    if(chk.checked){
+      if(domicilioManual){
+        L.push("Entrega a domicilio: sí (coordinar costo)");
+      } else {
+        var sel=document.getElementById("zona");
+        var opt=sel.options[sel.selectedIndex];
+        zonaNombre=opt?opt.getAttribute("data-nombre"):"";
+        dom=parseFloat(sel.value)||0;
+        L.push("Entrega a domicilio ("+zonaNombre+"): "+usd(dom));
+      }
+    } else {
+      L.push("Entrega: recoge o coordina");
+    }
+    L.push("TOTAL: "+usd(sub+dom)+(hayWA?" (+ precios por confirmar)":""));
+    L.push("");
+    L.push("Nombre: "+nombre.value.trim());
+    L.push("Teléfono: "+tel.value.trim());
+    if(chk.checked){
+      var dir=document.getElementById("direccion").value.trim();
+      if(dir) L.push("Dirección: "+dir+(zonaNombre?(" ("+zonaNombre+")"):""));
+    }
+    var notas=document.getElementById("notas").value.trim();
+    if(notas) L.push("Notas: "+notas);
+    L.push("");
+    L.push("Pago: efectivo USD o Zelle.");
+
+    window.location.href = wa(L.join("\n"));
+  });
+
+  pintar();
+  cargarZonas();
+})();
+</script>
+
+</body>
+</html>

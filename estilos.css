@@ -129,6 +129,50 @@ h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em
   .producto h2{margin-top:0}
 }
 
+/* ---------- Cantidad + agregar al pedido (catálogo) ---------- */
+.nota-precio-cab{margin-top:10px;font-size:13.5px;color:var(--gris);font-weight:600}
+.acciones{margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.producto .acciones .btn{width:auto;margin-top:0}
+.acciones .btn-wa{flex:1 1 100%}
+.btn-agregar{flex:1 1 auto;min-width:160px}
+.btn-agregar.ok{background:var(--verde-hoja)}
+.cantidad{display:inline-flex;align-items:center;border:1.5px solid var(--linea);border-radius:10px;overflow:hidden;background:#fff}
+.qbtn{width:42px;height:46px;border:0;background:#fff;font-size:22px;font-weight:700;color:var(--azul);cursor:pointer;line-height:1}
+.qbtn:active{background:var(--azul-claro)}
+.qinput{width:50px;height:46px;border:0;border-left:1px solid var(--linea);border-right:1px solid var(--linea);text-align:center;font-size:16px;font-weight:700;color:var(--tinta);-moz-appearance:textfield}
+.qinput::-webkit-outer-spin-button,.qinput::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* ---------- Botón flotante "Ver mi pedido" ---------- */
+.carrito-flotante{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:60;
+  display:inline-flex;align-items:center;gap:9px;
+  background:var(--azul);color:#fff;text-decoration:none;
+  padding:13px 22px;border-radius:99px;font-size:15.5px;font-weight:700;
+  box-shadow:0 6px 20px rgba(28,54,103,.35);
+}
+.carrito-flotante svg{display:block}
+
+/* ---------- Página de pedido (checkout) ---------- */
+.pedido-vacio{text-align:center;padding:50px 0;color:var(--gris);font-size:16px}
+.linea-item{display:flex;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--linea)}
+.li-nombre{font-weight:800;color:var(--azul);font-size:15.5px}
+.li-precio{font-size:13.5px;color:var(--gris);font-weight:600;margin-top:2px}
+.li-quitar{background:none;border:0;color:var(--rojo);font-size:13px;font-weight:700;cursor:pointer;padding:6px 0 0;margin-top:4px;display:inline-block}
+.campo{margin-top:16px}
+.campo label{display:block;font-size:14px;font-weight:700;color:var(--azul);margin-bottom:6px}
+.campo input[type=text],.campo input[type=tel],.campo select,.campo textarea{
+  width:100%;padding:12px 14px;border:1.5px solid var(--linea);border-radius:10px;
+  font-size:16px;font-family:inherit;color:var(--tinta);background:#fff;
+}
+.campo textarea{min-height:70px;resize:vertical}
+.campo .error-campo{border-color:var(--rojo)}
+.check{display:flex;align-items:center;gap:10px;margin-top:18px;font-size:15.5px;font-weight:600;cursor:pointer}
+.check input{width:20px;height:20px;flex-shrink:0}
+.totales{margin-top:22px;padding:16px 18px;background:var(--azul-claro);border-radius:12px}
+.totales .fila{display:flex;justify-content:space-between;gap:12px;font-size:15px;padding:3px 0}
+.totales .total{font-size:20px;font-weight:800;color:var(--azul);border-top:1px solid #cdd8ec;margin-top:8px;padding-top:10px}
+.nota-pago{margin-top:12px;font-size:13.5px;color:var(--gris)}
+
 /* ---------- Pie ---------- */
 footer{padding:30px 0 46px;text-align:center}
 footer .logo-pie{height:54px;width:auto;margin-bottom:10px}

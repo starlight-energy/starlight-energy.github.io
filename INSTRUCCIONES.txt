@@ -4,6 +4,8 @@ STARLIGHT ENERGY SOLUTIONS — INSTRUCCIONES DEL SITIO
 CONTENIDO DE LA CARPETA
   index.html      → página de inicio
   catalogo.html   → catálogo con inventario y precios
+  pedido.html     → carrito y checkout (el cliente arma su pedido)
+  carrito.js      → lógica del carrito (no necesitas tocarlo)
   estilos.css     → diseño (no necesitas tocarlo)
   fotos/logo.png  → tu logo (ya incluido)
 
@@ -48,6 +50,35 @@ PASO 3 — EL INVENTARIO EN GOOGLE SHEETS (3 minutos, una sola vez)
   A PARTIR DE AHORA: para cambiar inventario o precios solo editas
   la hoja de Google desde tu teléfono. La página se actualiza sola.
   (Google tarda hasta 5 minutos en reflejar los cambios.)
+
+PASO 3B — LAS ZONAS DE DOMICILIO (en la misma hoja de Google)
+  El cliente, al hacer su pedido, elige una zona de entrega y la
+  página le suma el costo. Esas zonas salen de una SEGUNDA pestaña
+  de tu mismo Google Sheet, llamada "domicilios":
+  1. Abajo en tu hoja, crea una pestaña nueva y nómbrala "domicilios".
+  2. Fila 1, dos columnas:   zona      costo
+     Filas siguientes, por ejemplo (solo el número en costo):
+        cardenas     2
+        varadero     15
+        matanzas     20
+     (La página le pone "USD" sola. Escribe los nombres bien, con
+      tildes, como quieres que se vean: "Cárdenas", "Varadero".)
+  3. Archivo → Compartir → Publicar en la web → elige la pestaña
+     "domicilios", formato CSV → Publicar → copia el enlace.
+  4. Ese enlace va en pedido.html, en la línea:
+        const HOJA_DOMICILIOS_URL = "...";
+     (ya está puesto; si creas una hoja nueva, pásaselo a Claude).
+  Para cambiar zonas o precios de domicilio: editas esa pestaña
+  desde el teléfono y la página se actualiza sola.
+
+CÓMO FUNCIONAN LOS PEDIDOS
+  El cliente elige cantidades en el catálogo ("Agregar al pedido"),
+  va a "Ver mi pedido", llena su nombre, teléfono y domicilio, y al
+  enviar te llega por WhatsApp un mensaje completo con todo el pedido
+  y el total. Tú confirmas el pago (efectivo USD o Zelle) y, por
+  ahora, ajustas tú misma el stock en la hoja. (El descuento
+  automático del inventario es un paso siguiente que requiere una
+  configuración extra de Google; pídeselo a Claude cuando quieras.)
 
 PASO 4 — TU SITIO EN INTERNET (GitHub Pages: gratis y sin límites)
   El sitio se publica en:
