@@ -61,7 +61,7 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxnw0FcODE_hE
 
 <header class="heroe contenedor" style="padding-bottom:24px">
   <span class="eyebrow">Catálogo · Disponibilidad de hoy</span>
-  <h1 style="font-size:clamp(26px,6vw,36px)">Equipos nuevos, con garantía y entrega a domicilio disponible.</h1>
+  <h1 style="font-size:clamp(26px,6vw,36px)">Equipos nuevos, sellados y con entrega a domicilio disponible.</h1>
 </header>
 
 <main class="contenedor">
@@ -217,8 +217,10 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxnw0FcODE_hE
         var nombre = btn.getAttribute("data-nombre");
         var articulo = (btn.getAttribute("data-articulo") || "la") + " ";
 
-        // Precio
+        // Precio: si en la hoja solo hay un número, añade " USD" automáticamente.
+        // Si escribes texto con letras (ej. "Consultar"), se respeta tal cual.
         if (pEl){
+          if (precio && /^[\d.,\s]+$/.test(precio)) precio = precio + " USD";
           pEl.innerHTML = precio
             ? precio
             : "<em>Precio del día por WhatsApp</em>";
