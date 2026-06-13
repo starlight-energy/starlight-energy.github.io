@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo — Starlight Energy Solutions</title>
+<meta name="description" content="Catálogo de estaciones EcoFlow Delta 2, Delta 3 Classic e inversores Sumry 4000W en Cárdenas. Disponibilidad y precios del día.">
+
+<!-- Vista previa al compartir el enlace por WhatsApp.
+     Si cambias el nombre del sitio en Netlify, actualiza la URL de og:image. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Catálogo — Starlight Energy Solutions">
+<meta property="og:description" content="Disponibilidad y precios del día: EcoFlow Delta 2, Delta 3 Classic, River 2 Pro e Inversor Sumry 4000W. Pide por WhatsApp.">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
+<meta name="theme-color" content="#1c3667">
+
+<link rel="stylesheet" href="estilos.css">
+<link rel="icon" href="fotos/logo.png">
+
+<!-- ============================================================
+     CONFIGURACIÓN — EDITA SOLO ESTA SECCIÓN
+     ============================================================
+     1. TELEFONO: tu WhatsApp con código de país, sin + ni espacios.
+     2. HOJA_URL: el link de tu Google Sheet publicado como CSV.
+        Cómo obtenerlo (una sola vez):
+        a) Crea una hoja en sheets.google.com con estas columnas
+           en la fila 1:  id | producto | precio | stock
+        b) Llena las filas así (el id NO se cambia):
+           delta2 | EcoFlow Delta 2          | 650 USD | 5
+           delta3 | EcoFlow Delta 3 Classic  | 700 USD | 3
+           river2 | EcoFlow River 2 Pro      | 450 USD | 4
+           sumry  | Inversor Sumry 4000W     | 480 USD | 0
+           (deja el precio vacío si prefieres "precio por WhatsApp")
+        c) Archivo → Compartir → Publicar en la web →
+           elige la hoja, formato CSV → Publicar → copia el link
+           y pégalo abajo entre las comillas.
+     Para actualizar inventario o precios después: solo edita la
+     hoja desde tu teléfono. La página se actualiza sola.
+     ============================================================ -->
+<script>
+const TELEFONO = "5363918876";
+const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxnw0FcODE_hE9vXjN1yd3sFDRrHKczwd_n9QOFYDbtytnuwSLoDzniT3bZc_xZEcLz4jM8BaK1NKF/pub?output=csv";
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">
+      <img src="fotos/logo.png" alt="Starlight Energy Solutions">
+      <strong>Starlight<small>Energy Solutions</small></strong>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Inicio</a></li>
+      <li><a class="activo" href="catalogo.html">Catálogo</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="heroe contenedor" style="padding-bottom:24px">
+  <span class="eyebrow">Catálogo · Disponibilidad de hoy</span>
+  <h1 style="font-size:clamp(26px,6vw,36px)">Equipos nuevos, con garantía y entrega a domicilio disponible.</h1>
+</header>
+
+<main class="contenedor">
+
+  <!-- ============ EcoFlow Delta 2 ============ -->
+  <article class="producto" id="delta2">
+    <img src="fotos/delta2.jpg" alt="EcoFlow Delta 2" loading="lazy">
+    <div>
+      <h2>EcoFlow Delta 2</h2>
+      <div class="capacidad">1024 Wh · 1800 W de salida</div>
+      <span class="badge-stock disponible" data-stock="delta2">Disponible</span>
+      <ul class="specs">
+        <li>Se carga de 0 a 80% en 50 minutos</li>
+        <li>Batería LFP: más de 3000 cargas de vida útil</li>
+        <li>Silenciosa, sin humo, segura dentro de la casa</li>
+        <li>6 tomas de corriente + puertos USB</li>
+      </ul>
+      <div class="enciende">
+        <strong>¿Qué enciende durante el apagón?</strong>
+        <span>Refrigerador, ventilador, TV, luces, celulares y laptop — varias horas según el uso.</span>
+      </div>
+      <div class="precio" data-precio="delta2"></div>
+      <a class="btn btn-wa" data-wa="delta2" data-nombre="EcoFlow Delta 2" data-articulo="la" href="#">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.5.5c-.1.1-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.4 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.4 0 .1 0 .7-.2 1.3z"/></svg>
+        <span class="btn-texto">Pedir por WhatsApp</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- ============ EcoFlow Delta 3 Classic ============ -->
+  <article class="producto" id="delta3">
+    <img src="fotos/delta3.jpg" alt="EcoFlow Delta 3 Classic" loading="lazy">
+    <div>
+      <h2>EcoFlow Delta 3 Classic</h2>
+      <div class="capacidad">1024 Wh · 1800 W · El modelo más nuevo</div>
+      <span class="badge-stock disponible" data-stock="delta3">Disponible</span>
+      <ul class="specs">
+        <li>Se carga de 0 a 80% en solo 45 minutos</li>
+        <li>Batería LFP: más de 4000 cargas de vida útil</li>
+        <li>Más silenciosa que un aire acondicionado (30 dB)</li>
+        <li>Cambio automático en 10 ms si se va la luz</li>
+      </ul>
+      <div class="enciende">
+        <strong>¿Qué enciende durante el apagón?</strong>
+        <span>Refrigerador, ventilador, TV, luces, celulares, cafetera y microondas por ratos.</span>
+      </div>
+      <div class="precio" data-precio="delta3"></div>
+      <a class="btn btn-wa" data-wa="delta3" data-nombre="EcoFlow Delta 3 Classic" data-articulo="la" href="#">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.5.5c-.1.1-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.4 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.4 0 .1 0 .7-.2 1.3z"/></svg>
+        <span class="btn-texto">Pedir por WhatsApp</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- ============ EcoFlow River 2 Pro ============ -->
+  <article class="producto" id="river2">
+    <img src="fotos/river2.jpg" alt="EcoFlow River 2 Pro" loading="lazy">
+    <div>
+      <h2>EcoFlow River 2 Pro</h2>
+      <div class="capacidad">768 Wh · 800 W de salida · La opción más económica</div>
+      <span class="badge-stock disponible" data-stock="river2">Disponible</span>
+      <ul class="specs">
+        <li>Se carga de 0 a 100% en solo 70 minutos</li>
+        <li>Batería LFP: más de 3000 cargas de vida útil</li>
+        <li>Ligera y fácil de mover por la casa (~8 kg)</li>
+        <li>X-Boost: soporta equipos de hasta 1600 W</li>
+      </ul>
+      <div class="enciende">
+        <strong>¿Qué enciende durante el apagón?</strong>
+        <span>Ventilador, TV, luces, celulares, laptop y router — perfecta para apagones cortos o como segundo equipo.</span>
+      </div>
+      <div class="precio" data-precio="river2"></div>
+      <a class="btn btn-wa" data-wa="river2" data-nombre="EcoFlow River 2 Pro" data-articulo="la" href="#">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.5.5c-.1.1-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.4 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.4 0 .1 0 .7-.2 1.3z"/></svg>
+        <span class="btn-texto">Pedir por WhatsApp</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- ============ Inversor Sumry 4000W ============ -->
+  <article class="producto" id="sumry">
+    <img src="fotos/sumry.jpg" alt="Inversor Sumry 4000W" loading="lazy">
+    <div>
+      <h2>Inversor Sumry 4000 W</h2>
+      <div class="capacidad">Onda pura · Para instalación fija en la casa</div>
+      <span class="badge-stock disponible" data-stock="sumry">Disponible</span>
+      <ul class="specs">
+        <li>4000 W de salida continua (8000 W pico)</li>
+        <li>Controlador solar MPPT de 140 A integrado</li>
+        <li>Funciona con baterías o directo con paneles de día</li>
+        <li>Pantalla LCD grande para ver todo en tiempo real</li>
+      </ul>
+      <div class="enciende">
+        <strong>¿Qué enciende durante el apagón?</strong>
+        <span>La casa completa: refrigerador, aire de ventana, lavadora, bomba de agua — según tus baterías.</span>
+      </div>
+      <div class="precio" data-precio="sumry"></div>
+      <a class="btn btn-wa" data-wa="sumry" data-nombre="Inversor Sumry 4000W" data-articulo="el" href="#">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.5.5c-.1.1-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.4 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.4 0 .1 0 .7-.2 1.3z"/></svg>
+        <span class="btn-texto">Pedir por WhatsApp</span>
+      </a>
+    </div>
+  </article>
+
+</main>
+
+<footer class="contenedor">
+  <img class="logo-pie" src="fotos/logo.png" alt="Starlight Energy Solutions">
+  <p>Starlight Energy Solutions · Cárdenas, Matanzas · Entrega a domicilio disponible</p>
+</footer>
+
+<script>
+(function(){
+  function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
+
+  // --- Estado por defecto (si la hoja no carga, la página sigue funcionando) ---
+  // Cada botón declara su artículo con data-articulo="el" o "la".
+  document.querySelectorAll("[data-wa]").forEach(function(btn){
+    var nombre = btn.getAttribute("data-nombre");
+    var articulo = (btn.getAttribute("data-articulo") || "la") + " ";
+    btn.href = wa("Hola 👋 Me interesa "+articulo+nombre+". ¿Está disponible?");
+  });
+  document.querySelectorAll("[data-precio]").forEach(function(p){
+    p.innerHTML = "<em>Precio del día por WhatsApp</em>";
+  });
+
+  // --- Lee inventario y precios desde Google Sheets ---
+  if (!HOJA_URL) return;
+
+  fetch(HOJA_URL, {cache:"no-store"})
+    .then(function(r){ return r.text(); })
+    .then(function(csv){
+      csv.split(/\r?\n/).slice(1).forEach(function(linea){
+        if (!linea.trim()) return;
+        // Separa por comas respetando comillas (ej: "1,200 USD" no se parte)
+        var c = [], campo = "", dentro = false;
+        for (var i = 0; i < linea.length; i++){
+          var ch = linea[i];
+          if (ch === '"'){ dentro = !dentro; }
+          else if (ch === ',' && !dentro){ c.push(campo); campo = ""; }
+          else { campo += ch; }
+        }
+        c.push(campo);
+        var id = (c[0]||"").trim().toLowerCase();
+        var precio = (c[2]||"").trim();
+        var stock = parseInt((c[3]||"").trim(), 10);
+        if (!id) return;
+
+        var badge = document.querySelector('[data-stock="'+id+'"]');
+        var pEl = document.querySelector('[data-precio="'+id+'"]');
+        var btn = document.querySelector('[data-wa="'+id+'"]');
+        if (!badge || !btn) return;
+        var nombre = btn.getAttribute("data-nombre");
+        var articulo = (btn.getAttribute("data-articulo") || "la") + " ";
+
+        // Precio
+        if (pEl){
+          pEl.innerHTML = precio
+            ? precio
+            : "<em>Precio del día por WhatsApp</em>";
+        }
+
+        // Inventario
+        if (!isNaN(stock)){
+          if (stock <= 0){
+            badge.textContent = "Agotado por el momento";
+            badge.className = "badge-stock agotado";
+            btn.querySelector(".btn-texto").textContent = "Avísame cuando llegue";
+            var agotadoTxt = articulo === "el " ? "agotado" : "agotada";
+            btn.href = wa("Hola 👋 Vi que "+articulo+nombre+" está "+agotadoTxt+". ¿Me avisas cuando llegue?");
+          } else if (stock <= 3){
+            badge.textContent = "¡Quedan solo "+stock+"!";
+            badge.className = "badge-stock pocas";
+          } else {
+            badge.textContent = "Disponible";
+            badge.className = "badge-stock disponible";
+          }
+        }
+      });
+    })
+    .catch(function(){ /* sin conexión a la hoja: se queda el estado por defecto */ });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,71 @@
+STARLIGHT ENERGY SOLUTIONS — INSTRUCCIONES DEL SITIO
+=====================================================
+
+CONTENIDO DE LA CARPETA
+  index.html      → página de inicio
+  catalogo.html   → catálogo con inventario y precios
+  estilos.css     → diseño (no necesitas tocarlo)
+  fotos/logo.png  → tu logo (ya incluido)
+
+PASO 1 — TU NÚMERO DE WHATSAPP
+  ¡Ya está puesto! (+53 63918876). Si algún día cambias de número,
+  edita la línea  const TELEFONO  en index.html y catalogo.html.
+
+PASO 2 — LAS FOTOS DE LOS PRODUCTOS
+  Las fotos ya vienen incluidas en la carpeta "fotos". Si quieres
+  cambiar alguna, usa estos nombres exactos (los nombres
+  exactos importan):
+     delta2.jpg   → EcoFlow Delta 2
+     river2.jpg   → EcoFlow River 2 Pro
+     delta3.jpg   → EcoFlow Delta 3 Classic
+     sumry.jpg    → Inversor Sumry 4000W
+  Dónde conseguirlas: tus propias fotos (mejor para la confianza)
+  o las oficiales de us.ecoflow.com y el listado de Amazon del Sumry.
+  IMPORTANTE: comprime cada foto en https://squoosh.app a menos de
+  100 KB para que la página cargue rápido en Cuba.
+
+PASO 3 — EL INVENTARIO EN GOOGLE SHEETS (3 minutos, una sola vez)
+  Junto a la carpeta "starlight" viene el archivo
+  plantilla-inventario.csv con la tabla ya armada. Solo tienes que:
+  1. Entra a sheets.google.com y crea una hoja nueva.
+  2. Menú Archivo → Importar → Subir → elige
+     plantilla-inventario.csv → "Reemplazar hoja de cálculo".
+  3. Llena las celdas vacías de las columnas "precio" y "stock".
+     ¡NO cambies nunca la columna "id"!
+     - El precio es texto libre ("650 USD", "650"), pero SIN comas.
+     - Si dejas el precio vacío, la página dice
+       "Precio del día por WhatsApp".
+     - stock 0 = aparece "Agotado" y el botón cambia a
+       "Avísame cuando llegue".
+     - stock 1 a 3 = aparece "¡Quedan solo X!".
+  4. Menú Archivo → Compartir → Publicar en la web.
+     Elige la hoja, formato "Valores separados por comas (.csv)",
+     pulsa Publicar y copia el enlace.
+  5. Abre catalogo.html y pega ese enlace en:
+        const HOJA_URL = "";   ←  entre las comillas
+     Guarda.
+
+  A PARTIR DE AHORA: para cambiar inventario o precios solo editas
+  la hoja de Google desde tu teléfono. La página se actualiza sola.
+  (Google tarda hasta 5 minutos en reflejar los cambios.)
+
+PASO 4 — TU SITIO EN INTERNET (GitHub Pages: gratis y sin límites)
+  El sitio se publica en:
+     https://starlight-energy.github.io
+  Pon ese enlace en tu perfil de WhatsApp Business.
+
+  ¿CÓMO SE ACTUALIZA?
+  - Inventario y precios: NO tocas nada aquí. Editas el Google
+    Sheet desde tu teléfono y el sitio se actualiza solo (Paso 3).
+  - Cambios en los archivos (textos, fotos, productos nuevos):
+    pídele a Claude que los publique. Si manejas la terminal, es:
+        cd starlight
+        git add -A
+        git commit -m "describe el cambio"
+        git push
+    En 1-2 minutos el sitio queda actualizado.
+
+  OJO: la dirección del sitio (starlight-energy.github.io) está
+  escrita en las líneas "og:image" de index.html y catalogo.html
+  para que el logo salga al compartir por WhatsApp. Si algún día
+  cambias de dirección, avísale a Claude para actualizarlas.
