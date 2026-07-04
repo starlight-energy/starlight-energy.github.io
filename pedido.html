@@ -19,7 +19,7 @@
      ============================================================ -->
 <script>
 const TELEFONO = "5363918876";
-const HOJA_DOMICILIOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxnw0FcODE_hE9vXjN1yd3sFDRrHKczwd_n9QOFYDbtytnuwSLoDzniT3bZc_xZEcLz4jM8BaK1NKF/pub?gid=1281006813&single=true&output=csv";
+const HOJA_DOMICILIOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmkm4fNBeANPSQ49hgyJtSiVMVNAZ2O31lNak_DgUhjjcJc0O63xUS2sCh23cRfoL8Nz/pub?gid=296761912&single=true&output=csv";
 </script>
 </head>
 <body>
@@ -117,7 +117,10 @@ const HOJA_DOMICILIOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRx
 (function(){
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
   function usd(n){ return (Math.round(n*100)/100).toLocaleString("en-US") + " USD"; }
-  function titulo(s){ return (s||"").replace(/\s+/g," ").trim().replace(/\b\w/g,function(c){return c.toUpperCase();}); }
+  function titulo(s){
+    s = (s||"").replace(/\s+/g," ").trim().toLowerCase();
+    return s.replace(/(^|\s)(\S)/g, function(m,sp,ch){ return sp + ch.toUpperCase(); });
+  }
 
   var zonas = [];            // {nombre, costo}
   var domicilioManual = false; // true = la hoja de zonas no cargó
