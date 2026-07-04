@@ -20,6 +20,10 @@
 <script>
 const TELEFONO = "5363918876";
 const HOJA_DOMICILIOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmkm4fNBeANPSQ49hgyJtSiVMVNAZ2O31lNak_DgUhjjcJc0O63xUS2sCh23cRfoL8Nz/pub?gid=296761912&single=true&output=csv";
+// URL de la aplicación web de Apps Script (anota cada pedido como "Pendiente").
+// Debe estar publicada con acceso "Cualquier persona". Si se deja vacía, el
+// pedido se envía por WhatsApp igual, solo que no se anota en la hoja.
+const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_dOAAV9xnZGybH1f454kjM5LogYwIB3zuFUgj02Zg6xxHoN3kTg/exec";
 </script>
 </head>
 <body>
@@ -285,6 +289,23 @@ const HOJA_DOMICILIOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSP
     if(notas) L.push("Notas: "+notas);
     L.push("");
     L.push("Pago: efectivo USD o Zelle.");
+
+    // Anota el pedido en la hoja (Apps Script) como "Pendiente".
+    // keepalive: se completa aunque la página navegue a WhatsApp enseguida.
+    // Nunca bloquea el envío: si falla, el pedido va por WhatsApp igual.
+    if (PEDIDOS_URL){
+      try {
+        var payload = {
+          nombre: nombre.value.trim(),
+          telefono: tel.value.trim(),
+          total: usd(sub+dom),
+          items: items.map(function(it){ return {id:it.id, nombre:it.nombre, cantidad:it.cantidad}; }),
+          domicilio: chk.checked ? {zona:(domicilioManual?"Por coordinar":zonaNombre), costo:dom} : null
+        };
+        fetch(PEDIDOS_URL, {method:"POST", mode:"no-cors", keepalive:true,
+          headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(payload)});
+      } catch(e){}
+    }
 
     window.location.href = wa(L.join("\n"));
   });
