@@ -75,10 +75,16 @@ CÓMO FUNCIONAN LOS PEDIDOS
   El cliente elige cantidades en el catálogo ("Agregar al pedido"),
   va a "Ver mi pedido", llena su nombre, teléfono y domicilio, y al
   enviar te llega por WhatsApp un mensaje completo con todo el pedido
-  y el total. Tú confirmas el pago (efectivo USD o Zelle) y, por
-  ahora, ajustas tú misma el stock en la hoja. (El descuento
-  automático del inventario es un paso siguiente que requiere una
-  configuración extra de Google; pídeselo a Claude cuando quieras.)
+  y el total. Además, el pedido se anota solo en la pestaña "Pedidos"
+  de tu hoja, como "Pendiente".
+
+  DESCUENTO AUTOMÁTICO DEL INVENTARIO (ya activo):
+  - Confirmas el pago por WhatsApp (efectivo USD o Zelle).
+  - En la pestaña "Pedidos", en la columna Estado de ese pedido,
+    eliges "Aceptado" → el stock baja solo en el inventario.
+  - Si el pedido no se concreta, eliges "Rechazado" → el stock
+    se devuelve. El stock SOLO baja cuando tú aceptas, así que un
+    pedido falso nunca te descuadra el inventario.
 
 PASO 4 — TU SITIO EN INTERNET (GitHub Pages: gratis y sin límites)
   El sitio se publica en:
