@@ -43,9 +43,16 @@ nav{
   padding:8px 12px;border-radius:8px;
 }
 .nav-links a.activo{background:var(--azul-claro);color:var(--azul)}
+/* En pantallas chicas el nombre escrito no cabe junto a los 3 enlaces:
+   se oculta y queda el logo (la marca sigue visible). */
+@media(max-width:520px){
+  .nav-logo strong{display:none}
+  .nav-links a{padding:8px 10px}
+}
 
 /* ---------- Héroe ---------- */
-.heroe{padding:44px 0 36px;border-bottom:1px solid var(--linea)}
+/* Solo padding vertical: el horizontal (20px) lo pone .contenedor */
+.heroe{padding-top:44px;padding-bottom:36px;border-bottom:1px solid var(--linea)}
 .eyebrow{
   display:inline-flex;align-items:center;gap:7px;
   font-size:13px;font-weight:700;color:var(--dorado);
@@ -70,7 +77,7 @@ nav{
 .btn[aria-disabled="true"]{background:#d8d8d6;color:#8a8a88;pointer-events:none}
 
 /* ---------- Secciones ---------- */
-section{padding:34px 0;border-bottom:1px solid var(--linea)}
+section{padding-top:34px;padding-bottom:34px;border-bottom:1px solid var(--linea)}
 h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em}
 .sub{margin-top:4px;font-size:15px;color:var(--gris)}
 
@@ -94,7 +101,7 @@ h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em
 .producto:last-of-type{border-bottom:0}
 .producto img{
   width:100%;height:auto;display:block;border-radius:12px;
-  background:#f4f4f2;aspect-ratio:4/3;object-fit:cover;
+  background:#fff;aspect-ratio:1/1;object-fit:contain;
 }
 .producto h2{margin-top:18px;font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em}
 .capacidad{margin-top:2px;font-size:14.5px;color:var(--gris);font-weight:600}
@@ -210,7 +217,7 @@ h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em
 /* ---------- Botón flotante "Ver mi pedido" ---------- */
 .carrito-flotante{
   position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:60;
-  display:inline-flex;align-items:center;gap:9px;
+  display:inline-flex;align-items:center;gap:9px;white-space:nowrap;
   background:var(--azul);color:#fff;text-decoration:none;
   padding:13px 22px;border-radius:99px;font-size:15.5px;font-weight:700;
   box-shadow:0 6px 20px rgba(28,54,103,.35);
@@ -239,7 +246,7 @@ h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em
 .nota-pago{margin-top:12px;font-size:13.5px;color:var(--gris)}
 
 /* ---------- Pie ---------- */
-footer{padding:30px 0 46px;text-align:center}
+footer{padding-top:30px;padding-bottom:46px;text-align:center}
 footer .enlace-tg{display:inline-block;margin-top:8px;color:var(--azul);font-weight:700;text-decoration:none;font-size:14px}
 footer .logo-pie{height:54px;width:auto;margin-bottom:10px}
 footer p{font-size:14px;color:var(--gris)}

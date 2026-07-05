@@ -181,9 +181,6 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
 <script src="carrito.js"></script>
 <script>
 (function(){
-  function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
-  function svgWA(){return '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.5.5c-.1.1-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.4 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.4 0 .1 0 .7-.2 1.3z"/></svg>';}
-
   // Botoncito "Compartir": abre el menú de compartir del teléfono o,
   // si no existe, WhatsApp para elegir a quién mandárselo.
   function agregarCompartir(cont, nombre, id){
@@ -210,14 +207,11 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
     var pn = cont.getAttribute("data-precio-num");
     var precio = (pn === null || pn === "") ? null : parseFloat(pn);
 
-    // Agotado → botón de WhatsApp + casilla para dejar su número
+    // Agotado → casilla para dejar su número y avisarle cuando llegue
     if (stock !== null && stock <= 0){
-      var art = articulo + " ";
-      var ag = articulo === "el" ? "agotado" : "agotada";
       cont.innerHTML =
-        '<a class="btn btn-wa" href="' + wa("Hola 👋 Vi que "+art+nombre+" está "+ag+". ¿Me podrían avisar cuando llegue?") + '">' + svgWA() + '<span class="btn-texto">Avíseme cuando llegue</span></a>' +
         '<div class="aviso-tel">' +
-          '<span class="aviso-txt">O deje su número y le escribimos al llegar:</span>' +
+          '<span class="aviso-txt">Deje su número de WhatsApp y le escribimos en cuanto llegue:</span>' +
           '<div class="aviso-fila">' +
             '<input type="tel" inputmode="tel" placeholder="Su número de WhatsApp" aria-label="Su número de WhatsApp">' +
             '<button type="button" class="btn btn-azul btn-aviso">Avisarme</button>' +
