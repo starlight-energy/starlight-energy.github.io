@@ -57,11 +57,12 @@ PASO 3B — LAS ZONAS DE DOMICILIO (en la misma hoja de Google)
   de tu mismo Google Sheet, llamada "domicilios":
   1. Abajo en tu hoja, crea una pestaña nueva y nómbrala "domicilios".
   2. Fila 1, dos columnas:   zona      costo
-     Filas siguientes, por ejemplo (solo el número en costo):
-        cardenas     2
-        varadero     15
-        matanzas     20
-     (La página le pone "USD" sola. Escribe los nombres bien, con
+     Filas siguientes, por ejemplo (solo el número en costo,
+     EN CUP — el domicilio se cobra en pesos cubanos):
+        Cárdenas     500
+        Varadero     3000
+        Matanzas     4000
+     (La página le pone "CUP" sola. Escribe los nombres bien, con
       tildes, como quieres que se vean: "Cárdenas", "Varadero".)
   3. Archivo → Compartir → Publicar en la web → elige la pestaña
      "domicilios", formato CSV → Publicar → copia el enlace.

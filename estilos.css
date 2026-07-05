@@ -129,6 +129,50 @@ h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em
   .producto h2{margin-top:0}
 }
 
+/* ---------- Cómo comprar (inicio) ---------- */
+.pasos{display:grid;gap:14px;margin-top:20px}
+.paso{border:1px solid var(--linea);border-radius:12px;padding:16px 18px}
+.paso .num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:50%;background:var(--dorado);
+  color:#fff;font-weight:800;font-size:14px;margin-bottom:8px;
+}
+.paso h3{font-size:16px;font-weight:800;color:var(--azul)}
+.paso p{margin-top:4px;font-size:14.5px;color:var(--gris)}
+@media(min-width:600px){.pasos{grid-template-columns:repeat(3,1fr)}}
+
+/* ---------- Tabla comparadora (inicio) ---------- */
+.tabla-scroll{overflow-x:auto;margin-top:18px;-webkit-overflow-scrolling:touch}
+.tabla-comp{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+.tabla-comp th{
+  text-align:left;padding:10px 12px;background:var(--azul-claro);color:var(--azul);
+  font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;
+}
+.tabla-comp td{padding:12px;border-bottom:1px solid var(--linea);vertical-align:top}
+.tabla-comp td:first-child a{color:var(--azul);font-weight:800;text-decoration:none}
+.tabla-comp td:first-child a::after{content:" →";color:var(--verde-hoja)}
+.tabla-comp .wh{white-space:nowrap;color:var(--gris);font-weight:600}
+
+/* ---------- Preguntas frecuentes (inicio) ---------- */
+.faq{margin-top:18px}
+.faq details{border:1px solid var(--linea);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.faq summary{
+  cursor:pointer;padding:14px 16px;font-size:15.5px;font-weight:700;color:var(--azul);
+  list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:20px;color:var(--dorado);font-weight:800;flex-shrink:0}
+.faq details[open] summary::after{content:"−"}
+.faq .faq-r{padding:0 16px 14px;font-size:14.5px;color:var(--gris);line-height:1.55}
+
+/* ---------- Botón compartir (catálogo) ---------- */
+.btn-compartir{
+  flex:1 1 100%;background:none;border:0;cursor:pointer;font-family:inherit;
+  color:var(--gris);font-size:13.5px;font-weight:700;padding:6px 0 0;text-align:left;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn-compartir:active{color:var(--azul)}
+
 /* ---------- Filtros de categoría (catálogo) ---------- */
 .filtros{display:flex;flex-wrap:wrap;gap:8px;padding:18px 0 4px}
 .chip{

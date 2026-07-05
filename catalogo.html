@@ -65,7 +65,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
 <header class="heroe contenedor" style="padding-bottom:24px">
   <span class="eyebrow">Catálogo · Disponibilidad de hoy</span>
   <h1 style="font-size:clamp(26px,6vw,36px)">Equipos nuevos, sellados y con entrega a domicilio disponible.</h1>
-  <p class="nota-precio-cab">Precios en USD · Pago en efectivo o Zelle</p>
+  <p class="nota-precio-cab">Precios en USD · Pago en efectivo o Zelle · Domicilio en CUP</p>
 </header>
 
 <main class="contenedor">
@@ -180,6 +180,22 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
   function svgWA(){return '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.5.5c-.1.1-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.4 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.4 0 .1 0 .7-.2 1.3z"/></svg>';}
 
+  // Botoncito "Compartir": abre el menú de compartir del teléfono o,
+  // si no existe, WhatsApp para elegir a quién mandárselo.
+  function agregarCompartir(cont, nombre, id){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn-compartir";
+    b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg> Compartir con un familiar';
+    b.addEventListener("click", function(){
+      var url = "https://starlight-energy.github.io/catalogo.html#" + id;
+      var texto = "Mira esto de Starlight Solutions ⚡ " + nombre + ": " + url;
+      if (navigator.share){ navigator.share({text: texto}).catch(function(){}); }
+      else { window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank"); }
+    });
+    cont.appendChild(b);
+  }
+
   // Dibuja los controles de un producto según su stock y precio reales.
   function render(cont){
     var id = cont.getAttribute("data-acciones");
@@ -219,6 +235,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
         }
         cont.querySelector(".aviso-tel").innerHTML = '<span class="aviso-ok">✓ Anotado. Le escribiremos por WhatsApp cuando llegue.</span>';
       });
+      agregarCompartir(cont, nombre, id);
       return;
     }
 
@@ -253,6 +270,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
       input.value = 1;
       setTimeout(function(){ btn.textContent = "Agregar al pedido"; btn.classList.remove("ok"); }, 1300);
     });
+    agregarCompartir(cont, nombre, id);
   }
 
   // Render inicial: si la hoja no carga, todo se ve disponible y se puede pedir.
