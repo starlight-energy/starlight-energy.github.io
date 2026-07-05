@@ -98,6 +98,13 @@ AVISOS DE "YA LLEGÓ" (pestaña "Avisos")
   - Después de escribirle al cliente, cambia su fila a "Avisado"
     para llevar el control.
 
+CONTADOR DE VISITAS (GoatCounter)
+  Para ver cuánta gente visita el sitio y qué páginas miran:
+  entra a  https://starlight-energy.goatcounter.com
+  (la cuenta se crea una sola vez en goatcounter.com con el
+  código "starlight-energy"; gratis y sin datos personales
+  de los visitantes).
+
 CATEGORÍAS DEL CATÁLOGO
   Los productos se agrupan por categoría (Energía, Otros, ...) y el
   cliente filtra con botones arriba del catálogo. La categoría de
