@@ -1,5 +1,5 @@
-STARLIGHT ENERGY SOLUTIONS — INSTRUCCIONES DEL SITIO
-=====================================================
+STARLIGHT SOLUTIONS — INSTRUCCIONES DEL SITIO
+==============================================
 
 CONTENIDO DE LA CARPETA
   index.html      → página de inicio
@@ -85,6 +85,24 @@ CÓMO FUNCIONAN LOS PEDIDOS
   - Si el pedido no se concreta, eliges "Rechazado" → el stock
     se devuelve. El stock SOLO baja cuando tú aceptas, así que un
     pedido falso nunca te descuadra el inventario.
+
+AVISOS DE "YA LLEGÓ" (pestaña "Avisos")
+  Cuando un producto está agotado, el cliente puede dejar su número
+  de WhatsApp en la página. Esos números caen en la pestaña "Avisos"
+  de tu hoja, como "Pendiente".
+  Cuando subas el stock de ese producto de 0 a más:
+  - Las filas de ese producto cambian solas a "AVISAR AHORA" y en la
+    columna "Enlace WhatsApp" aparece un enlace listo: le das clic y
+    se abre el chat con el mensaje ya escrito. Solo pulsas enviar.
+  - Después de escribirle al cliente, cambia su fila a "Avisado"
+    para llevar el control.
+
+CATEGORÍAS DEL CATÁLOGO
+  Los productos se agrupan por categoría (Energía, Otros, ...) y el
+  cliente filtra con botones arriba del catálogo. La categoría de
+  cada producto vive en el archivo del catálogo: cuando quieras
+  agregar un producto nuevo o una categoría nueva, pídeselo a Claude
+  (los botones de filtro se arman solos).
 
 PASO 4 — TU SITIO EN INTERNET (GitHub Pages: gratis y sin límites)
   El sitio se publica en:

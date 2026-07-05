@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Catálogo — Starlight Energy Solutions</title>
-<meta name="description" content="Catálogo de estaciones EcoFlow Delta 2, Delta 3 Classic e inversores Sumry 4000W en Cárdenas. Disponibilidad y precios del día.">
+<title>Catálogo — Starlight Solutions</title>
+<meta name="description" content="Catálogo de Starlight Solutions en Cárdenas: estaciones EcoFlow, inversores Sumry y más productos para su hogar. Disponibilidad y precios del día.">
 
 <!-- Vista previa al compartir el enlace por WhatsApp.
      Si cambias el nombre del sitio en Netlify, actualiza la URL de og:image. -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="Catálogo — Starlight Energy Solutions">
-<meta property="og:description" content="Disponibilidad y precios del día: EcoFlow Delta 2, Delta 3 Classic, River 2 Pro e Inversor Sumry 4000W. Solicítelos por WhatsApp.">
+<meta property="og:title" content="Catálogo — Starlight Solutions">
+<meta property="og:description" content="Disponibilidad y precios del día: estaciones EcoFlow, inversor Sumry y más productos para su hogar. Solicítelos por WhatsApp.">
 <meta property="og:locale" content="es_ES">
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
@@ -41,6 +41,9 @@
 <script>
 const TELEFONO = "5363918876";
 const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmkm4fNBeANPSQ49hgyJtSiVMVNAZ2O31lNak_DgUhjjcJc0O63xUS2sCh23cRfoL8Nz/pub?gid=810667152&single=true&output=csv";
+// La misma app de Apps Script que registra los pedidos; aquí guarda los
+// números de quienes quieren aviso cuando llegue un producto agotado.
+const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_dOAAV9xnZGybH1f454kjM5LogYwIB3zuFUgj02Zg6xxHoN3kTg/exec";
 </script>
 </head>
 <body>
@@ -48,8 +51,8 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
 <nav>
   <div class="nav-inner">
     <a class="nav-logo" href="index.html">
-      <img src="fotos/logo.png" alt="Starlight Energy Solutions">
-      <strong>Starlight<small>Energy Solutions</small></strong>
+      <img src="fotos/logo.png" alt="Starlight Solutions">
+      <strong>Starlight<small>Solutions</small></strong>
     </a>
     <ul class="nav-links">
       <li><a href="index.html">Inicio</a></li>
@@ -67,8 +70,12 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
 
 <main class="contenedor">
 
+  <!-- Filtros de categoría: se generan solos a partir del atributo
+       data-categoria de cada producto. Con una sola categoría se ocultan. -->
+  <div class="filtros" id="filtros" hidden></div>
+
   <!-- ============ EcoFlow Delta 2 ============ -->
-  <article class="producto" id="delta2">
+  <article class="producto" id="delta2" data-categoria="Energía">
     <img src="fotos/delta2.jpg" alt="EcoFlow Delta 2" loading="lazy">
     <div>
       <h2>EcoFlow Delta 2</h2>
@@ -90,7 +97,7 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
   </article>
 
   <!-- ============ EcoFlow Delta 3 Classic ============ -->
-  <article class="producto" id="delta3">
+  <article class="producto" id="delta3" data-categoria="Energía">
     <img src="fotos/delta3.jpg" alt="EcoFlow Delta 3 Classic" loading="lazy">
     <div>
       <h2>EcoFlow Delta 3 Classic</h2>
@@ -112,7 +119,7 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
   </article>
 
   <!-- ============ EcoFlow River 2 Pro ============ -->
-  <article class="producto" id="river2">
+  <article class="producto" id="river2" data-categoria="Energía">
     <img src="fotos/river2.jpg" alt="EcoFlow River 2 Pro" loading="lazy">
     <div>
       <h2>EcoFlow River 2 Pro</h2>
@@ -134,7 +141,7 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
   </article>
 
   <!-- ============ Inversor Sumry 4000W ============ -->
-  <article class="producto" id="sumry">
+  <article class="producto" id="sumry" data-categoria="Energía">
     <img src="fotos/sumry.jpg" alt="Inversor Sumry 4000W" loading="lazy">
     <div>
       <h2>Inversor Sumry 4000 W</h2>
@@ -163,8 +170,8 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
 </a>
 
 <footer class="contenedor">
-  <img class="logo-pie" src="fotos/logo.png" alt="Starlight Energy Solutions">
-  <p>Starlight Energy Solutions · Cárdenas, Matanzas · Entrega a domicilio disponible</p>
+  <img class="logo-pie" src="fotos/logo.png" alt="Starlight Solutions">
+  <p>Starlight Solutions · Cárdenas, Matanzas · Entrega a domicilio disponible</p>
 </footer>
 
 <script src="carrito.js"></script>
@@ -183,11 +190,35 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
     var pn = cont.getAttribute("data-precio-num");
     var precio = (pn === null || pn === "") ? null : parseFloat(pn);
 
-    // Agotado → botón de aviso por WhatsApp
+    // Agotado → botón de WhatsApp + casilla para dejar su número
     if (stock !== null && stock <= 0){
       var art = articulo + " ";
       var ag = articulo === "el" ? "agotado" : "agotada";
-      cont.innerHTML = '<a class="btn btn-wa" href="' + wa("Hola 👋 Vi que "+art+nombre+" está "+ag+". ¿Me podrían avisar cuando llegue?") + '">' + svgWA() + '<span class="btn-texto">Avíseme cuando llegue</span></a>';
+      cont.innerHTML =
+        '<a class="btn btn-wa" href="' + wa("Hola 👋 Vi que "+art+nombre+" está "+ag+". ¿Me podrían avisar cuando llegue?") + '">' + svgWA() + '<span class="btn-texto">Avíseme cuando llegue</span></a>' +
+        '<div class="aviso-tel">' +
+          '<span class="aviso-txt">O deje su número y le escribimos al llegar:</span>' +
+          '<div class="aviso-fila">' +
+            '<input type="tel" inputmode="tel" placeholder="Su número de WhatsApp" aria-label="Su número de WhatsApp">' +
+            '<button type="button" class="btn btn-azul btn-aviso">Avisarme</button>' +
+          '</div>' +
+        '</div>';
+      var inp = cont.querySelector(".aviso-tel input");
+      var bAviso = cont.querySelector(".btn-aviso");
+      bAviso.addEventListener("click", function(){
+        var telCliente = (inp.value || "").replace(/[^\d+]/g, "");
+        if (telCliente.replace(/\D/g,"").length < 8){
+          inp.classList.add("error-campo"); inp.focus(); return;
+        }
+        if (PEDIDOS_URL){
+          try {
+            fetch(PEDIDOS_URL, {method:"POST", mode:"no-cors", keepalive:true,
+              headers:{"Content-Type":"text/plain;charset=utf-8"},
+              body: JSON.stringify({accion:"aviso", id:id, producto:nombre, telefono:telCliente})});
+          } catch(e){}
+        }
+        cont.querySelector(".aviso-tel").innerHTML = '<span class="aviso-ok">✓ Anotado. Le escribiremos por WhatsApp cuando llegue.</span>';
+      });
       return;
     }
 
@@ -230,6 +261,34 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
   document.querySelectorAll("[data-precio]").forEach(function(p){
     p.innerHTML = "<em>Precio del día por WhatsApp</em>";
   });
+
+  // --- Filtros de categoría (se arman solos según data-categoria) ---
+  (function(){
+    var productos = document.querySelectorAll(".producto[data-categoria]");
+    var cats = [];
+    productos.forEach(function(p){
+      var c = p.getAttribute("data-categoria");
+      if (c && cats.indexOf(c) === -1) cats.push(c);
+    });
+    if (cats.length < 2) return;   // con una sola categoría no hacen falta filtros
+
+    var barra = document.getElementById("filtros");
+    barra.hidden = false;
+    ["Todos"].concat(cats).forEach(function(cat, i){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (i === 0 ? " activo" : "");
+      b.textContent = cat;
+      b.addEventListener("click", function(){
+        barra.querySelectorAll(".chip").forEach(function(x){ x.classList.remove("activo"); });
+        b.classList.add("activo");
+        productos.forEach(function(p){
+          p.style.display = (cat === "Todos" || p.getAttribute("data-categoria") === cat) ? "" : "none";
+        });
+      });
+      barra.appendChild(b);
+    });
+  })();
 
   // --- Lee inventario y precios desde Google Sheets ---
   if (!HOJA_URL) return;

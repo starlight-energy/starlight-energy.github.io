@@ -129,6 +129,27 @@ h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em
   .producto h2{margin-top:0}
 }
 
+/* ---------- Filtros de categoría (catálogo) ---------- */
+.filtros{display:flex;flex-wrap:wrap;gap:8px;padding:18px 0 4px}
+.chip{
+  border:1.5px solid var(--linea);background:#fff;color:var(--tinta);
+  padding:8px 16px;border-radius:99px;font-size:14.5px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+}
+.chip.activo{background:var(--azul);border-color:var(--azul);color:#fff}
+
+/* ---------- Aviso "déjeme su número" (producto agotado) ---------- */
+.aviso-tel{flex:1 1 100%;margin-top:4px}
+.aviso-txt{display:block;font-size:13.5px;color:var(--gris);font-weight:600;margin-bottom:8px}
+.aviso-fila{display:flex;gap:8px}
+.aviso-fila input{
+  flex:1;min-width:0;padding:12px 14px;border:1.5px solid var(--linea);
+  border-radius:10px;font-size:16px;font-family:inherit;color:var(--tinta);
+}
+.aviso-fila input.error-campo{border-color:var(--rojo)}
+.aviso-fila .btn{padding:12px 18px}
+.aviso-ok{display:block;font-size:14.5px;font-weight:700;color:var(--verde-hoja);padding:8px 0}
+
 /* ---------- Cantidad + agregar al pedido (catálogo) ---------- */
 .nota-precio-cab{margin-top:10px;font-size:13.5px;color:var(--gris);font-weight:600}
 .acciones{margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
