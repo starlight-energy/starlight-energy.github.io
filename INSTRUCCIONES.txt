@@ -98,6 +98,11 @@ AVISOS DE "YA LLEGÓ" (pestaña "Avisos")
   - Después de escribirle al cliente, cambia su fila a "Avisado"
     para llevar el control.
 
+CANAL DE TELEGRAM
+  El canal de anuncios es  https://t.me/starlight_solutions  y está
+  enlazado en la página de inicio (Contacto) y en el pie de todas
+  las páginas. Publica ahí las llegadas de mercancía y ofertas.
+
 CONTADOR DE VISITAS (GoatCounter)
   Para ver cuánta gente visita el sitio y qué páginas miran:
   entra a  https://starlight-energy.goatcounter.com
