@@ -6,7 +6,7 @@
 <title>Su pedido — Starlight Solutions</title>
 <meta name="description" content="Revise su pedido de equipos de energía y envíelo por WhatsApp. Entrega a domicilio disponible en Cárdenas.">
 <meta name="theme-color" content="#1c3667">
-<link rel="stylesheet" href="estilos.css">
+<link rel="stylesheet" href="estilos.css?v=2">
 <link rel="icon" href="fotos/logo.png">
 
 <!-- ============================================================
@@ -16,9 +16,14 @@
         de tu Google Sheet (columnas: zona | costo). Se publica
         igual que el inventario. Si lo dejas vacío, el costo del
         domicilio se coordina por WhatsApp.
+     3. HOJA_URL: el MISMO link CSV del inventario que está en
+        catalogo.html. Aquí sirve para refrescar los precios del
+        pedido y limitar las cantidades al stock real. Si se deja
+        vacío, se usan los datos guardados al agregar.
      ============================================================ -->
 <script>
 const TELEFONO = "5363918876";
+const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmkm4fNBeANPSQ49hgyJtSiVMVNAZ2O31lNak_DgUhjjcJc0O63xUS2sCh23cRfoL8Nz/pub?gid=810667152&single=true&output=csv";
 const HOJA_DOMICILIOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmkm4fNBeANPSQ49hgyJtSiVMVNAZ2O31lNak_DgUhjjcJc0O63xUS2sCh23cRfoL8Nz/pub?gid=296761912&single=true&output=csv";
 // URL de la aplicación web de Apps Script (anota cada pedido como "Pendiente").
 // Debe estar publicada con acceso "Cualquier persona". Si se deja vacía, el
@@ -41,6 +46,8 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
     </ul>
   </div>
 </nav>
+
+<noscript><div class="contenedor"><p class="nojs">Su navegador tiene JavaScript desactivado y algunas funciones del sitio no van a funcionar. Escríbanos por WhatsApp al +53 63918876 y le atendemos igual.</p></div></noscript>
 
 <header class="heroe contenedor" style="padding-bottom:24px">
   <span class="eyebrow">Su pedido</span>
@@ -121,7 +128,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
 <!-- Contador de visitas (GoatCounter): gratis, sin cookies, ~3 KB. -->
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js"></script>
+<script src="carrito.js?v=2"></script>
 <script>
 (function(){
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
@@ -135,6 +142,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
 
   var zonas = [];            // {nombre, costo}
   var domicilioManual = false; // true = la hoja de zonas no cargó
+  var infoHoja = {};         // id -> {precio, stock} frescos de la hoja
 
   var vacio = document.getElementById("pedido-vacio");
   var lleno = document.getElementById("pedido-lleno");
@@ -148,6 +156,8 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
 
     lista.innerHTML="";
     items.forEach(function(it){
+      var inf = infoHoja[it.id];
+      var tope = (inf && inf.stock != null && inf.stock > 0) ? inf.stock : null;
       var row=document.createElement("div");
       row.className="linea-item";
       var precioTxt = it.precio==null ? "Precio por WhatsApp" : usd(it.precio)+" c/u";
@@ -159,13 +169,13 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
         '</div>'+
         '<div class="cantidad">'+
           '<button type="button" class="qbtn" data-menos aria-label="Quitar uno">−</button>'+
-          '<input type="number" class="qinput" value="'+it.cantidad+'" min="1" inputmode="numeric" aria-label="Cantidad">'+
+          '<input type="number" class="qinput" value="'+it.cantidad+'" min="1"'+(tope?' max="'+tope+'"':'')+' inputmode="numeric" aria-label="Cantidad">'+
           '<button type="button" class="qbtn" data-mas aria-label="Agregar uno">+</button>'+
         '</div>';
       row.querySelector(".li-nombre").textContent=it.nombre;
       row.querySelector(".li-precio").textContent=precioTxt;
       var input=row.querySelector(".qinput");
-      function fijar(v){ v=parseInt(v,10)||1; if(v<1)v=1; input.value=v; Carrito.fijarCantidad(it.id,v); totales(); }
+      function fijar(v){ v=parseInt(v,10)||1; if(v<1)v=1; if(tope!=null&&v>tope)v=tope; input.value=v; Carrito.fijarCantidad(it.id,v); totales(); }
       row.querySelector("[data-menos]").addEventListener("click",function(){
         var v=(parseInt(input.value,10)||1)-1;
         if(v<1){ Carrito.quitar(it.id); pintar(); return; }
@@ -219,15 +229,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
       .then(function(csv){
         csv.split(/\r?\n/).slice(1).forEach(function(l){
           if(!l.trim()) return;
-          // Separa por comas respetando comillas (igual que en catalogo.html)
-          var c=[], campo="", dentro=false;
-          for (var i=0; i<l.length; i++){
-            var ch=l[i];
-            if (ch==='"'){ dentro=!dentro; }
-            else if (ch===',' && !dentro){ c.push(campo); campo=""; }
-            else { campo+=ch; }
-          }
-          c.push(campo);
+          var c=Carrito.csvFila(l);   // separa por comas respetando comillas
           var nombre=titulo(c[0]);
           var costo=parseFloat((c[1]||"").trim());
           if(nombre && !isNaN(costo)) zonas.push({nombre:nombre,costo:costo});
@@ -245,6 +247,35 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
         totales();
       })
       .catch(function(){ domicilioManual=true; bloqueZona.hidden=true; totales(); });
+  }
+
+  // Refresca precios y stock desde la hoja del inventario (la misma del
+  // catálogo): así el pedido no sale con precios viejos ni con más
+  // cantidad que el stock real. Si la hoja no carga, todo sigue con lo
+  // guardado al agregar (el pedido nunca se rompe por la hoja).
+  function refrescarHoja(){
+    if (typeof HOJA_URL === "undefined" || !HOJA_URL) return;
+    fetch(HOJA_URL,{cache:"no-store"})
+      .then(function(r){ return r.text(); })
+      .then(function(csv){
+        csv.split(/\r?\n/).slice(1).forEach(function(l){
+          if(!l.trim()) return;
+          var c=Carrito.csvFila(l);
+          var id=(c[0]||"").trim().toLowerCase();
+          if(!id) return;
+          var stock=parseInt((c[3]||"").trim(),10);
+          infoHoja[id]={precio:Carrito.precioNum(c[2]), stock:isNaN(stock)?null:stock};
+        });
+        var c=Carrito.cargar(), cambio=false;
+        for(var k in c) if(c.hasOwnProperty(k) && infoHoja[k]){
+          if(c[k].precio!==infoHoja[k].precio){ c[k].precio=infoHoja[k].precio; cambio=true; }
+          var st=infoHoja[k].stock;
+          if(st!=null && st>0 && c[k].cantidad>st){ c[k].cantidad=st; cambio=true; }
+        }
+        if(cambio) Carrito.guardar(c);
+        pintar();   // repinta con precios y topes frescos
+      })
+      .catch(function(){ /* sin hoja: se queda lo guardado */ });
   }
 
   document.getElementById("enviar").addEventListener("click",function(){
@@ -267,6 +298,11 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
 
     var items=Carrito.items();
     if(!items.length) return;
+
+    // Se desactiva un momento: un doble toque no debe anotar el pedido dos veces
+    var btnEnviar=document.getElementById("enviar");
+    btnEnviar.disabled=true;
+    setTimeout(function(){ btnEnviar.disabled=false; },4000);
 
     var L=[];
     L.push("Hola 👋 Quiero hacer un pedido en Starlight:");
@@ -328,6 +364,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
 
   pintar();
   cargarZonas();
+  refrescarHoja();
 })();
 </script>
 

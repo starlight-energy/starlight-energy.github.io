@@ -64,6 +64,34 @@
     return arr;
   }
 
+  // --- Ayudas compartidas para leer la hoja de Google (CSV) ---
+
+  // Separa una línea CSV por comas respetando comillas dobles
+  // (ej.: "1,200 USD" no se parte). La usan catalogo.html y pedido.html.
+  function csvFila(linea) {
+    var c = [], campo = "", dentro = false;
+    for (var i = 0; i < linea.length; i++) {
+      var ch = linea[i];
+      if (ch === '"') { dentro = !dentro; }
+      else if (ch === ',' && !dentro) { c.push(campo); campo = ""; }
+      else { campo += ch; }
+    }
+    c.push(campo);
+    return c;
+  }
+
+  // Convierte el texto de precio de la hoja a número, o null si tiene
+  // letras ("Consultar") o está vacío. Acepta "650", "650.50", "1,200"
+  // y también "1.200" escrito con punto de miles.
+  function precioNum(txt) {
+    txt = String(txt == null ? "" : txt).trim();
+    if (!txt || !/^[\d.,\s]+$/.test(txt)) return null;
+    var s = txt.replace(/\s/g, "").replace(/,/g, "");
+    if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+    var n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  }
+
   // Pinta el contador y muestra/oculta el botón flotante "Ver mi pedido"
   function actualizarInsignia() {
     var n = contar();
@@ -78,7 +106,8 @@
   window.Carrito = {
     cargar: cargar, guardar: guardar, agregar: agregar,
     fijarCantidad: fijarCantidad, quitar: quitar,
-    contar: contar, items: items, actualizarInsignia: actualizarInsignia
+    contar: contar, items: items, actualizarInsignia: actualizarInsignia,
+    csvFila: csvFila, precioNum: precioNum
   };
 
   document.addEventListener("DOMContentLoaded", actualizarInsignia);

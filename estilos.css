@@ -50,6 +50,9 @@ nav{
   .nav-links a{padding:8px 10px}
 }
 
+/* Aviso cuando el navegador no tiene JavaScript */
+.nojs{margin-top:14px;padding:12px 16px;background:var(--dorado-fondo);border:1px solid var(--dorado);border-radius:10px;font-size:14.5px}
+
 /* ---------- Héroe ---------- */
 /* Solo padding vertical: el horizontal (20px) lo pone .contenedor */
 .heroe{padding-top:44px;padding-bottom:36px;border-bottom:1px solid var(--linea)}
@@ -74,7 +77,7 @@ nav{
 .btn-wa{background:var(--verde-wa);color:#fff}
 .btn-wa:active{background:var(--verde-wa-oscuro)}
 .btn-borde{border:1.5px solid var(--linea);color:var(--azul)}
-.btn[aria-disabled="true"]{background:#d8d8d6;color:#8a8a88;pointer-events:none}
+.btn[aria-disabled="true"],.btn:disabled{background:#d8d8d6;color:#8a8a88;pointer-events:none}
 
 /* ---------- Secciones ---------- */
 section{padding-top:34px;padding-bottom:34px;border-bottom:1px solid var(--linea)}

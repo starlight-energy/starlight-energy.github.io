@@ -34,11 +34,12 @@ PASO 3 — EL INVENTARIO EN GOOGLE SHEETS (3 minutos, una sola vez)
      plantilla-inventario.csv → "Reemplazar hoja de cálculo".
   3. Llena las celdas vacías de las columnas "precio" y "stock".
      ¡NO cambies nunca la columna "id"!
-     - El precio es texto libre ("650 USD", "650"), pero SIN comas.
+     - El precio es texto libre ("650 USD", "650"). Los miles van
+       pegados: escribe "1200", no "1,200" ni "1.200".
      - Si dejas el precio vacío, la página dice
        "Precio del día por WhatsApp".
-     - stock 0 = aparece "Agotado" y el botón cambia a
-       "Avísame cuando llegue".
+     - stock 0 = aparece "Agotado por el momento" y una casilla
+       para que el cliente deje su WhatsApp (cae en "Avisos").
      - stock 1 a 3 = aparece "¡Quedan solo X!".
   4. Menú Archivo → Compartir → Publicar en la web.
      Elige la hoja, formato "Valores separados por comas (.csv)",
