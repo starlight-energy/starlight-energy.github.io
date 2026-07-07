@@ -1,5 +1,5 @@
 /* ============================================================
-   Carrito de pedidos de Starlight Energy Solutions
+   Carrito de pedidos de Starlight Solutions
    Se guarda en el navegador del cliente (localStorage), así no
    se pierde si recarga la página. Lo usan catalogo.html (para
    agregar) y pedido.html (para revisar y enviar por WhatsApp).

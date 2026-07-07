@@ -219,7 +219,15 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
       .then(function(csv){
         csv.split(/\r?\n/).slice(1).forEach(function(l){
           if(!l.trim()) return;
-          var c=l.split(",");
+          // Separa por comas respetando comillas (igual que en catalogo.html)
+          var c=[], campo="", dentro=false;
+          for (var i=0; i<l.length; i++){
+            var ch=l[i];
+            if (ch==='"'){ dentro=!dentro; }
+            else if (ch===',' && !dentro){ c.push(campo); campo=""; }
+            else { campo+=ch; }
+          }
+          c.push(campo);
           var nombre=titulo(c[0]);
           var costo=parseFloat((c[1]||"").trim());
           if(nombre && !isNaN(costo)) zonas.push({nombre:nombre,costo:costo});
@@ -306,7 +314,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbwYC_cpDXEvzvzhwn-_
         var payload = {
           nombre: nombre.value.trim(),
           telefono: tel.value.trim(),
-          total: usd(sub+dom),
+          total: usd(sub) + (dom>0 ? " + "+cup(dom) : ""),
           items: items.map(function(it){ return {id:it.id, nombre:it.nombre, cantidad:it.cantidad}; }),
           domicilio: chk.checked ? {zona:(domicilioManual?"Por coordinar":zonaNombre), costo:dom} : null
         };
