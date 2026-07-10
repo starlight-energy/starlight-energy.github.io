@@ -14,7 +14,7 @@
 <meta property="og:locale" content="es_ES">
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
-<link rel="stylesheet" href="estilos.css?v=2">
+<link rel="stylesheet" href="estilos.css?v=3">
 <link rel="icon" href="fotos/logo.png">
 
 <!-- ============================================================
@@ -173,6 +173,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
         '<div style="flex:1">'+
           '<div class="li-nombre"></div>'+
           '<div class="li-precio"></div>'+
+          (inf && inf.stock===0 ? '<div class="li-agotado">Puede estar agotado — lo confirmamos por WhatsApp</div>' : '')+
           '<button type="button" class="li-quitar">Quitar</button>'+
         '</div>'+
         '<div class="cantidad">'+
@@ -303,8 +304,14 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     btnEnviar.disabled=true;
     setTimeout(function(){ btnEnviar.disabled=false; },4000);
 
+    // Código corto del pedido: va en el WhatsApp y en la fila de la
+    // pestaña "Pedidos", para casarlos fácil. Sin caracteres que se
+    // confunden (0/O, 1/I/L).
+    var abc="ABCDEFGHJKMNPQRSTUVWXYZ23456789", cod="SL-";
+    for(var ci=0;ci<4;ci++) cod+=abc[Math.floor(Math.random()*abc.length)];
+
     var L=[];
-    L.push("Hola 👋 Quiero hacer un pedido en Starlight:");
+    L.push("Hola 👋 Quiero hacer un pedido en Starlight (pedido "+cod+"):");
     L.push("");
     var sub=0, hayWA=false;
     items.forEach(function(it){
@@ -347,6 +354,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     if (PEDIDOS_URL){
       try {
         var payload = {
+          codigoPedido: cod,
           nombre: nombre.value.trim(),
           telefono: tel.value.trim(),
           total: usd(sub) + (dom>0 ? " + "+cup(dom) : ""),

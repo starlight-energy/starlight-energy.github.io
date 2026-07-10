@@ -233,6 +233,7 @@ h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em
 .li-nombre{font-weight:800;color:var(--azul);font-size:15.5px}
 .li-precio{font-size:13.5px;color:var(--gris);font-weight:600;margin-top:2px}
 .li-quitar{background:none;border:0;color:var(--rojo);font-size:13px;font-weight:700;cursor:pointer;padding:6px 0 0;margin-top:4px;display:inline-block}
+.li-agotado{font-size:12.5px;color:var(--rojo);font-weight:700;margin-top:3px}
 .campo{margin-top:16px}
 .campo label{display:block;font-size:14px;font-weight:700;color:var(--azul);margin-bottom:6px}
 .campo input[type=text],.campo input[type=tel],.campo select,.campo textarea{
