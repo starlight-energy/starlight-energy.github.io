@@ -180,7 +180,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 <!-- Contador de visitas (GoatCounter): gratis, sin cookies, ~3 KB. -->
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js?v=2"></script>
+<script src="carrito.js?v=3"></script>
 <script>
 (function(){
   // Botoncito "Compartir": abre el menú de compartir del teléfono o,
@@ -309,47 +309,39 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   })();
 
   // --- Lee inventario y precios desde Google Sheets ---
-  if (!HOJA_URL) return;
+  // Si la hoja no carga, se queda el estado por defecto (todo se puede pedir).
+  Carrito.leerHoja(HOJA_URL, function(c){
+    var id = (c[0]||"").trim().toLowerCase();
+    var precioTxt = (c[2]||"").trim();
+    var stock = parseInt((c[3]||"").trim(), 10);
+    if (!id) return;
 
-  fetch(HOJA_URL, {cache:"no-store"})
-    .then(function(r){ return r.text(); })
-    .then(function(csv){
-      csv.split(/\r?\n/).slice(1).forEach(function(linea){
-        if (!linea.trim()) return;
-        var c = Carrito.csvFila(linea);   // separa por comas respetando comillas
-        var id = (c[0]||"").trim().toLowerCase();
-        var precioTxt = (c[2]||"").trim();
-        var stock = parseInt((c[3]||"").trim(), 10);
-        if (!id) return;
+    var badge = document.querySelector('[data-stock="'+id+'"]');
+    var pEl = document.querySelector('[data-precio="'+id+'"]');
+    var cont = document.querySelector('[data-acciones="'+id+'"]');
+    if (!cont) return;
 
-        var badge = document.querySelector('[data-stock="'+id+'"]');
-        var pEl = document.querySelector('[data-precio="'+id+'"]');
-        var cont = document.querySelector('[data-acciones="'+id+'"]');
-        if (!cont) return;
+    // Precio: número para el carrito + texto (con USD) para mostrar.
+    var precioNum = Carrito.precioNum(precioTxt);
+    cont.setAttribute("data-precio-num", precioNum === null ? "" : precioNum);
+    if (pEl){
+      // textContent (no innerHTML): lo que venga de la hoja nunca entra como HTML
+      if (precioTxt){ pEl.textContent = (precioNum !== null) ? (precioTxt + " USD") : precioTxt; }
+      else { pEl.innerHTML = "<em>Precio del día por WhatsApp</em>"; }
+    }
 
-        // Precio: número para el carrito + texto (con USD) para mostrar.
-        var precioNum = Carrito.precioNum(precioTxt);
-        cont.setAttribute("data-precio-num", precioNum === null ? "" : precioNum);
-        if (pEl){
-          // textContent (no innerHTML): lo que venga de la hoja nunca entra como HTML
-          if (precioTxt){ pEl.textContent = (precioNum !== null) ? (precioTxt + " USD") : precioTxt; }
-          else { pEl.innerHTML = "<em>Precio del día por WhatsApp</em>"; }
-        }
+    // Inventario (badge + tope de cantidad)
+    if (!isNaN(stock)){
+      cont.setAttribute("data-stock-num", stock);
+      if (badge){
+        if (stock <= 0){ badge.textContent = "Agotado por el momento"; badge.className = "badge-stock agotado"; }
+        else if (stock <= 3){ badge.textContent = "¡Quedan solo "+stock+"!"; badge.className = "badge-stock pocas"; }
+        else { badge.textContent = "Disponible"; badge.className = "badge-stock disponible"; }
+      }
+    }
 
-        // Inventario (badge + tope de cantidad)
-        if (!isNaN(stock)){
-          cont.setAttribute("data-stock-num", stock);
-          if (badge){
-            if (stock <= 0){ badge.textContent = "Agotado por el momento"; badge.className = "badge-stock agotado"; }
-            else if (stock <= 3){ badge.textContent = "¡Quedan solo "+stock+"!"; badge.className = "badge-stock pocas"; }
-            else { badge.textContent = "Disponible"; badge.className = "badge-stock disponible"; }
-          }
-        }
-
-        render(cont); // vuelve a dibujar con stock y precio reales
-      });
-    })
-    .catch(function(){ /* sin conexión a la hoja: se queda el estado por defecto */ });
+    render(cont); // vuelve a dibujar con stock y precio reales
+  });
 })();
 </script>
 

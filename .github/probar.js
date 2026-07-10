@@ -58,4 +58,23 @@ const item = C.items()[0];
 if (!item || item.cantidad !== 3) { console.error(`✗ tope de stock: cantidad = ${item && item.cantidad}, esperaba 3`); process.exit(1); }
 console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
 
-console.log("TODO OK");
+// 4) leerHoja: entrega filas respetando comillas, y degrada bien si falla
+(async () => {
+  const filas = [];
+  global.fetch = () => Promise.resolve({ text: () => Promise.resolve('id,producto,precio,stock\ndelta2,"EcoFlow, Delta 2",650,5\n\n') });
+  await new Promise((fin) => C.leerHoja("https://hoja", (c) => filas.push(c), fin,
+    () => { console.error("✗ leerHoja: no debía fallar"); process.exit(1); }));
+  if (filas.length !== 1 || filas[0][1] !== "EcoFlow, Delta 2") { console.error(`✗ leerHoja filas: ${JSON.stringify(filas)}`); process.exit(1); }
+
+  let fallo = false;
+  global.fetch = () => Promise.reject(new Error("sin conexión"));
+  await new Promise((fin) => C.leerHoja("https://hoja", () => {}, null, () => { fallo = true; fin(); }));
+  if (!fallo) { console.error("✗ leerHoja: sin conexión no llamó siFalla"); process.exit(1); }
+
+  fallo = false;
+  await new Promise((fin) => { C.leerHoja("", () => {}, null, () => { fallo = true; }); fin(); });
+  if (!fallo) { console.error("✗ leerHoja: con url vacía no llamó siFalla"); process.exit(1); }
+  console.log("✓ leerHoja: filas con comillas, fallo de red y url vacía");
+
+  console.log("TODO OK");
+})();

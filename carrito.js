@@ -92,6 +92,25 @@
     return isNaN(n) ? null : n;
   }
 
+  // Lee una hoja de Google publicada como CSV y entrega cada fila de
+  // datos (sin el encabezado) ya separada en columnas: porFila(columnas).
+  // Al terminar todas las filas llama alTerminar(); si la hoja no carga
+  // (o no hay url) llama siFalla(). Regla del sitio: un fallo de la
+  // hoja NUNCA debe romper la página — quien llama decide el plan B.
+  function leerHoja(url, porFila, alTerminar, siFalla) {
+    if (!url) { if (siFalla) siFalla(); return; }
+    fetch(url, { cache: "no-store" })
+      .then(function (r) { return r.text(); })
+      .then(function (csv) {
+        csv.split(/\r?\n/).slice(1).forEach(function (linea) {
+          if (!linea.trim()) return;
+          porFila(csvFila(linea));
+        });
+        if (alTerminar) alTerminar();
+      })
+      .catch(function () { if (siFalla) siFalla(); });
+  }
+
   // Pinta el contador y muestra/oculta el botón flotante "Ver mi pedido"
   function actualizarInsignia() {
     var n = contar();
@@ -107,7 +126,7 @@
     cargar: cargar, guardar: guardar, agregar: agregar,
     fijarCantidad: fijarCantidad, quitar: quitar,
     contar: contar, items: items, actualizarInsignia: actualizarInsignia,
-    csvFila: csvFila, precioNum: precioNum
+    csvFila: csvFila, precioNum: precioNum, leerHoja: leerHoja
   };
 
   document.addEventListener("DOMContentLoaded", actualizarInsignia);

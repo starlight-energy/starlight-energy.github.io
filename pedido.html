@@ -136,7 +136,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 <!-- Contador de visitas (GoatCounter): gratis, sin cookies, ~3 KB. -->
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js?v=2"></script>
+<script src="carrito.js?v=3"></script>
 <script>
 (function(){
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
@@ -231,30 +231,26 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
   function cargarZonas(){
     var bloqueZona=document.getElementById("bloque-zona");
-    if(!HOJA_DOMICILIOS_URL){ domicilioManual=true; bloqueZona.hidden=true; totales(); return; }
-    fetch(HOJA_DOMICILIOS_URL,{cache:"no-store"})
-      .then(function(r){ return r.text(); })
-      .then(function(csv){
-        csv.split(/\r?\n/).slice(1).forEach(function(l){
-          if(!l.trim()) return;
-          var c=Carrito.csvFila(l);   // separa por comas respetando comillas
-          var nombre=titulo(c[0]);
-          var costo=parseFloat((c[1]||"").trim());
-          if(nombre && !isNaN(costo)) zonas.push({nombre:nombre,costo:costo});
-        });
-        if(!zonas.length){ domicilioManual=true; bloqueZona.hidden=true; totales(); return; }
-        var sel=document.getElementById("zona");
-        sel.innerHTML="";
-        zonas.forEach(function(z){
-          var o=document.createElement("option");
-          o.value=z.costo;
-          o.textContent=z.nombre+" (+"+cup(z.costo)+")";
-          o.setAttribute("data-nombre",z.nombre);
-          sel.appendChild(o);
-        });
-        totales();
-      })
-      .catch(function(){ domicilioManual=true; bloqueZona.hidden=true; totales(); });
+    // Plan B: sin zonas (hoja vacía, sin url o sin conexión) el costo
+    // del domicilio se coordina por WhatsApp.
+    function sinZonas(){ domicilioManual=true; bloqueZona.hidden=true; totales(); }
+    Carrito.leerHoja(HOJA_DOMICILIOS_URL, function(c){
+      var nombre=titulo(c[0]);
+      var costo=parseFloat((c[1]||"").trim());
+      if(nombre && !isNaN(costo)) zonas.push({nombre:nombre,costo:costo});
+    }, function(){
+      if(!zonas.length){ sinZonas(); return; }
+      var sel=document.getElementById("zona");
+      sel.innerHTML="";
+      zonas.forEach(function(z){
+        var o=document.createElement("option");
+        o.value=z.costo;
+        o.textContent=z.nombre+" (+"+cup(z.costo)+")";
+        o.setAttribute("data-nombre",z.nombre);
+        sel.appendChild(o);
+      });
+      totales();
+    }, sinZonas);
   }
 
   // Refresca precios y stock desde la hoja del inventario (la misma del
@@ -262,28 +258,23 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   // cantidad que el stock real. Si la hoja no carga, todo sigue con lo
   // guardado al agregar (el pedido nunca se rompe por la hoja).
   function refrescarHoja(){
-    if (typeof HOJA_URL === "undefined" || !HOJA_URL) return;
-    fetch(HOJA_URL,{cache:"no-store"})
-      .then(function(r){ return r.text(); })
-      .then(function(csv){
-        csv.split(/\r?\n/).slice(1).forEach(function(l){
-          if(!l.trim()) return;
-          var c=Carrito.csvFila(l);
-          var id=(c[0]||"").trim().toLowerCase();
-          if(!id) return;
-          var stock=parseInt((c[3]||"").trim(),10);
-          infoHoja[id]={precio:Carrito.precioNum(c[2]), stock:isNaN(stock)?null:stock};
-        });
-        var c=Carrito.cargar(), cambio=false;
-        for(var k in c) if(c.hasOwnProperty(k) && infoHoja[k]){
-          if(c[k].precio!==infoHoja[k].precio){ c[k].precio=infoHoja[k].precio; cambio=true; }
-          var st=infoHoja[k].stock;
-          if(st!=null && st>0 && c[k].cantidad>st){ c[k].cantidad=st; cambio=true; }
-        }
-        if(cambio) Carrito.guardar(c);
-        pintar();   // repinta con precios y topes frescos
-      })
-      .catch(function(){ /* sin hoja: se queda lo guardado */ });
+    if (typeof HOJA_URL === "undefined") return;
+    // Si la hoja no carga, no hay plan B que hacer: se queda lo guardado.
+    Carrito.leerHoja(HOJA_URL, function(c){
+      var id=(c[0]||"").trim().toLowerCase();
+      if(!id) return;
+      var stock=parseInt((c[3]||"").trim(),10);
+      infoHoja[id]={precio:Carrito.precioNum(c[2]), stock:isNaN(stock)?null:stock};
+    }, function(){
+      var c=Carrito.cargar(), cambio=false;
+      for(var k in c) if(c.hasOwnProperty(k) && infoHoja[k]){
+        if(c[k].precio!==infoHoja[k].precio){ c[k].precio=infoHoja[k].precio; cambio=true; }
+        var st=infoHoja[k].stock;
+        if(st!=null && st>0 && c[k].cantidad>st){ c[k].cantidad=st; cambio=true; }
+      }
+      if(cambio) Carrito.guardar(c);
+      pintar();   // repinta con precios y topes frescos
+    });
   }
 
   document.getElementById("enviar").addEventListener("click",function(){
