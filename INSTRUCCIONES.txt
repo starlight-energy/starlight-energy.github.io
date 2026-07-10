@@ -99,6 +99,19 @@ AVISOS DE "YA LLEGÓ" (pestaña "Avisos")
   - Después de escribirle al cliente, cambia su fila a "Avisado"
     para llevar el control.
 
+COPIA DE SEGURIDAD DE TU HOJA (semanal y automática)
+  Tu hoja de Google es la memoria del negocio (inventario, pedidos,
+  avisos). Cada lunes por la mañana se guarda sola una copia
+  completa en tu Drive, en la carpeta "Respaldos Starlight", y las
+  copias con más de 8 semanas van a la papelera.
+  Si algún día borras algo por error:
+  - Entra a drive.google.com → carpeta "Respaldos Starlight" →
+    abre la copia más reciente y copia de vuelta lo que falte.
+  - También sirve: en tu hoja, menú Archivo → Historial de
+    versiones → Ver historial de versiones.
+  (Esto se activa UNA sola vez ejecutando "activarRespaldo" en el
+   editor de Apps Script; después no hay que tocarlo más.)
+
 CANAL DE TELEGRAM
   El canal de anuncios es  https://t.me/starlight_solutions  y está
   enlazado en la página de inicio (Contacto) y en el pie de todas
