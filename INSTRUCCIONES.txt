@@ -88,6 +88,18 @@ CÓMO FUNCIONAN LOS PEDIDOS
     se devuelve. El stock SOLO baja cuando tú aceptas, así que un
     pedido falso nunca te descuadra el inventario.
 
+PANEL FÁCIL EN EL TELÉFONO (opcional, sin abrir la hoja)
+  Hay un panel tipo app para manejar todo desde el teléfono con
+  botones grandes: ver los productos con su foto, subir/bajar el
+  stock, cambiar el precio, y aceptar o rechazar los pedidos.
+  - Se abre en la misma dirección del Apps Script (la que termina
+    en /exec) puesta en el navegador; pide una clave de 4 números.
+  - Consejo: en el menú del navegador, "Añadir a pantalla de inicio"
+    para abrirlo como si fuera una aplicación.
+  - Para activarlo (una vez) o cambiar la clave, pídeselo a Claude
+    (el código va en el Apps Script, archivos apps-script-inventario.gs
+    y panel.html).
+
 AVISOS DE "YA LLEGÓ" (pestaña "Avisos")
   Cuando un producto está agotado, el cliente puede dejar su número
   de WhatsApp en la página. Esos números caen en la pestaña "Avisos"
