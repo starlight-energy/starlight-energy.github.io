@@ -6,8 +6,6 @@
 <title>Catálogo — Starlight Solutions</title>
 <meta name="description" content="Catálogo de Starlight Solutions en Cárdenas: estaciones EcoFlow, inversores Sumry y más productos para su hogar. Disponibilidad y precios del día.">
 
-<!-- Vista previa al compartir el enlace por WhatsApp.
-     Si cambias la dirección del sitio (GitHub Pages), actualiza la URL de og:image. -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Catálogo — Starlight Solutions">
 <meta property="og:description" content="Disponibilidad y precios del día: estaciones EcoFlow, inversor Sumry y más productos para su hogar. Solicítelos por WhatsApp.">
@@ -18,31 +16,9 @@
 <link rel="stylesheet" href="estilos.css?v=3">
 <link rel="icon" href="fotos/logo.png">
 
-<!-- ============================================================
-     CONFIGURACIÓN — EDITA SOLO ESTA SECCIÓN
-     ============================================================
-     1. TELEFONO: tu WhatsApp con código de país, sin + ni espacios.
-     2. HOJA_URL: el link de tu Google Sheet publicado como CSV.
-        Cómo obtenerlo (una sola vez):
-        a) Crea una hoja en sheets.google.com con estas columnas
-           en la fila 1:  id | producto | precio | stock
-        b) Llena las filas así (el id NO se cambia):
-           delta2 | EcoFlow Delta 2          | 650 USD | 5
-           delta3 | EcoFlow Delta 3 Classic  | 700 USD | 3
-           river2 | EcoFlow River 2 Pro      | 450 USD | 4
-           sumry  | Inversor Sumry 4000W     | 480 USD | 0
-           (deja el precio vacío si prefieres "precio por WhatsApp")
-        c) Archivo → Compartir → Publicar en la web →
-           elige la hoja, formato CSV → Publicar → copia el link
-           y pégalo abajo entre las comillas.
-     Para actualizar inventario o precios después: solo edita la
-     hoja desde tu teléfono. La página se actualiza sola.
-     ============================================================ -->
 <script>
 const TELEFONO = "5363918876";
 const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmkm4fNBeANPSQ49hgyJtSiVMVNAZ2O31lNak_DgUhjjcJc0O63xUS2sCh23cRfoL8Nz/pub?gid=810667152&single=true&output=csv";
-// La misma app de Apps Script que registra los pedidos; aquí guarda los
-// números de quienes quieren aviso cuando llegue un producto agotado.
 const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gTarCLpDb30ksTUcnERDhWfdk-dnP-SZZPJ8MPzvjmgQmxFsUaIg/exec";
 </script>
 </head>
@@ -72,207 +48,9 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
 <main class="contenedor">
 
-  <!-- Filtros de categoría: se generan solos a partir del atributo
-       data-categoria de cada producto. Con una sola categoría se ocultan. -->
   <div class="filtros" id="filtros" hidden></div>
-
-  <!-- ============ EcoFlow Delta 2 ============ -->
-  <article class="producto" id="delta2" data-categoria="Energía">
-    <img src="fotos/delta2.jpg" alt="EcoFlow Delta 2" loading="lazy">
-    <div>
-      <h2>EcoFlow Delta 2</h2>
-      <div class="capacidad">1024 Wh · 1800 W de salida</div>
-      <span class="badge-stock disponible" data-stock="delta2">Disponible</span>
-      <ul class="specs">
-        <li>Se carga de 0 a 80% en 50 minutos</li>
-        <li>Batería LFP: más de 3000 cargas de vida útil</li>
-        <li>Silenciosa, sin humo, segura dentro de la casa</li>
-        <li>6 tomas de corriente + puertos USB</li>
-      </ul>
-      <div class="enciende">
-        <strong>¿Qué enciende durante el apagón?</strong>
-        <span>Refrigerador, ventilador, TV, luces, teléfonos y laptop durante varias horas, según el uso.</span>
-      </div>
-      <div class="precio" data-precio="delta2"></div>
-      <div class="acciones" data-acciones="delta2" data-nombre="EcoFlow Delta 2" data-articulo="la"></div>
-    </div>
-  </article>
-
-  <!-- ============ EcoFlow Delta 3 Classic ============ -->
-  <article class="producto" id="delta3" data-categoria="Energía">
-    <img src="fotos/delta3.jpg" alt="EcoFlow Delta 3 Classic" loading="lazy">
-    <div>
-      <h2>EcoFlow Delta 3 Classic</h2>
-      <div class="capacidad">1024 Wh · 1800 W · El modelo más nuevo</div>
-      <span class="badge-stock disponible" data-stock="delta3">Disponible</span>
-      <ul class="specs">
-        <li>Se carga de 0 a 80% en solo 45 minutos</li>
-        <li>Batería LFP: más de 4000 cargas de vida útil</li>
-        <li>Más silenciosa que un aire acondicionado (30 dB)</li>
-        <li>Cambio automático en 10 ms si se va la luz</li>
-      </ul>
-      <div class="enciende">
-        <strong>¿Qué enciende durante el apagón?</strong>
-        <span>Refrigerador, ventilador, TV, luces, teléfonos y, por períodos cortos, cafetera y microondas.</span>
-      </div>
-      <div class="precio" data-precio="delta3"></div>
-      <div class="acciones" data-acciones="delta3" data-nombre="EcoFlow Delta 3 Classic" data-articulo="la"></div>
-    </div>
-  </article>
-
-  <!-- ============ EcoFlow River 2 Pro ============ -->
-  <article class="producto" id="river2" data-categoria="Energía">
-    <img src="fotos/river2.jpg" alt="EcoFlow River 2 Pro" loading="lazy">
-    <div>
-      <h2>EcoFlow River 2 Pro</h2>
-      <div class="capacidad">768 Wh · 800 W de salida · La opción más económica</div>
-      <span class="badge-stock disponible" data-stock="river2">Disponible</span>
-      <ul class="specs">
-        <li>Se carga de 0 a 100% en solo 70 minutos</li>
-        <li>Batería LFP: más de 3000 cargas de vida útil</li>
-        <li>Ligera y fácil de mover por la casa (~8 kg)</li>
-        <li>X-Boost: soporta equipos de hasta 1600 W</li>
-      </ul>
-      <div class="enciende">
-        <strong>¿Qué enciende durante el apagón?</strong>
-        <span>Ventilador, TV, luces, teléfonos, laptop y router. Ideal para apagones cortos o como segundo equipo.</span>
-      </div>
-      <div class="precio" data-precio="river2"></div>
-      <div class="acciones" data-acciones="river2" data-nombre="EcoFlow River 2 Pro" data-articulo="la"></div>
-    </div>
-  </article>
-
-  <!-- ============ Inversor Sumry 4000W ============ -->
-  <article class="producto" id="sumry" data-categoria="Energía">
-    <img src="fotos/sumry.jpg" alt="Inversor Sumry 4000W" loading="lazy">
-    <div>
-      <h2>Inversor Sumry 4000 W</h2>
-      <div class="capacidad">Onda pura · Para instalación fija en la casa</div>
-      <span class="badge-stock disponible" data-stock="sumry">Disponible</span>
-      <ul class="specs">
-        <li>4000 W de salida continua (8000 W pico)</li>
-        <li>Controlador solar MPPT de 140 A integrado</li>
-        <li>Funciona con baterías o directo con paneles de día</li>
-        <li>Pantalla LCD grande para ver todo en tiempo real</li>
-      </ul>
-      <div class="enciende">
-        <strong>¿Qué enciende durante el apagón?</strong>
-        <span>Toda la casa: refrigerador, aire de ventana, lavadora y bomba de agua, según la capacidad de sus baterías.</span>
-      </div>
-      <div class="precio" data-precio="sumry"></div>
-      <div class="acciones" data-acciones="sumry" data-nombre="Inversor Sumry 4000W" data-articulo="el"></div>
-    </div>
-  </article>
-
-  <!-- ============ Batería LiFePO4 200Ah ============ -->
-  <article class="producto" id="bateria" data-categoria="Energía">
-    <img src="fotos/bateria.jpg" alt="Batería LiFePO4 12.8V 200Ah" loading="lazy">
-    <div>
-      <h2>Batería LiFePO4 12.8V 200Ah</h2>
-      <div class="capacidad">2560 Wh · Litio de ciclo profundo · Para instalación fija</div>
-      <span class="badge-stock disponible" data-stock="bateria">Disponible</span>
-      <ul class="specs">
-        <li>12.8 V · 200 Ah (2560 Wh) de capacidad</li>
-        <li>Química LiFePO4: miles de ciclos de vida útil</li>
-        <li>Ideal para inversores (como el Sumry) y respaldo del hogar</li>
-        <li>Sistema de protección (BMS) integrado</li>
-      </ul>
-      <div class="enciende">
-        <strong>¿Para qué sirve?</strong>
-        <span>Almacena energía para mantener su casa encendida durante los apagones cuando se combina con un inversor. Se recarga con corriente o con paneles solares.</span>
-      </div>
-      <div class="precio" data-precio="bateria"></div>
-      <div class="acciones" data-acciones="bateria" data-nombre="Batería LiFePO4 12.8V 200Ah" data-articulo="la"></div>
-    </div>
-  </article>
-
-  <!-- ============ Cable solar MC4 a XT60i ============ -->
-  <article class="producto" id="cablemc4" data-categoria="Energía">
-    <img src="fotos/cablemc4.jpg" alt="Cable solar MC4 a XT60i" loading="lazy">
-    <div>
-      <h2>Cable solar MC4 a XT60i</h2>
-      <div class="capacidad">16 AWG · 90 cm · Conecta un panel solar a su EcoFlow</div>
-      <span class="badge-stock disponible" data-stock="cablemc4">Disponible</span>
-      <ul class="specs">
-        <li>Un extremo MC4 (panel solar), otro XT60i (EcoFlow)</li>
-        <li>Permite cargar su estación EcoFlow con un panel solar</li>
-        <li>Cable de cobre 16 AWG, apto para exteriores</li>
-        <li>90 cm de largo (3 pies)</li>
-      </ul>
-      <div class="enciende">
-        <strong>¿Para qué sirve?</strong>
-        <span>Cargar su EcoFlow Delta o River con la luz del sol: energía gratis y silenciosa durante el día.</span>
-      </div>
-      <div class="precio" data-precio="cablemc4"></div>
-      <div class="acciones" data-acciones="cablemc4" data-nombre="Cable solar MC4 a XT60i" data-articulo="el"></div>
-    </div>
-  </article>
-
-  <!-- ============ Conectores MC4 ============ -->
-  <article class="producto" id="mc4" data-categoria="Energía">
-    <img src="fotos/mc4.jpg" alt="Conectores MC4" loading="lazy">
-    <div>
-      <h2>Conectores MC4 (juego)</h2>
-      <div class="capacidad">Para conexiones de instalaciones solares</div>
-      <span class="badge-stock disponible" data-stock="mc4">Disponible</span>
-      <ul class="specs">
-        <li>Conectores macho y hembra para cable solar</li>
-        <li>Sellados, resistentes al agua</li>
-        <li>Para unir, extender o reparar cables de paneles</li>
-        <li>Compatibles con el estándar solar MC4</li>
-      </ul>
-      <div class="enciende">
-        <strong>¿Para qué sirve?</strong>
-        <span>Hacer conexiones seguras entre paneles solares, cables y equipos. Ideal si está montando o ampliando su sistema solar.</span>
-      </div>
-      <div class="precio" data-precio="mc4"></div>
-      <div class="acciones" data-acciones="mc4" data-nombre="Conectores MC4" data-articulo="los"></div>
-    </div>
-  </article>
-
-  <!-- ============ Lámpara solar 504 LED ============ -->
-  <article class="producto" id="luzsolar" data-categoria="Iluminación">
-    <img src="fotos/luzsolar.jpg" alt="Lámpara solar 504 LED con sensor" loading="lazy">
-    <div>
-      <h2>Lámpara solar 504 LED</h2>
-      <div class="capacidad">Con panel solar, sensor de movimiento y control remoto</div>
-      <span class="badge-stock disponible" data-stock="luzsolar">Disponible</span>
-      <ul class="specs">
-        <li>504 LED de alto brillo</li>
-        <li>Panel solar integrado: se carga de día, alumbra de noche</li>
-        <li>Resistente al agua, para exteriores</li>
-        <li>Sensor de movimiento y control remoto incluido</li>
-      </ul>
-      <div class="enciende">
-        <strong>¿Para qué sirve?</strong>
-        <span>Ilumina patios, entradas, pasillos y portales sin cables ni gasto de electricidad — sigue funcionando durante los apagones.</span>
-      </div>
-      <div class="precio" data-precio="luzsolar"></div>
-      <div class="acciones" data-acciones="luzsolar" data-nombre="Lámpara solar 504 LED" data-articulo="la"></div>
-    </div>
-  </article>
-
-  <!-- ============ Banco de energía EcoFlow ============ -->
-  <article class="producto" id="powerbank" data-categoria="Otros">
-    <img src="fotos/powerbank.jpg" alt="Banco de energía EcoFlow" loading="lazy">
-    <div>
-      <h2>Banco de energía EcoFlow</h2>
-      <div class="capacidad">Batería portátil para su teléfono · Carga rápida</div>
-      <span class="badge-stock disponible" data-stock="powerbank">Disponible</span>
-      <ul class="specs">
-        <li>Recarga su teléfono varias veces</li>
-        <li>Carga rápida por USB-C</li>
-        <li>Compacto, cabe en el bolsillo</li>
-        <li>Marca EcoFlow — nuevo y sellado</li>
-      </ul>
-      <div class="enciende">
-        <strong>¿Para qué sirve?</strong>
-        <span>Mantener el teléfono cargado en la calle o durante los apagones, sin depender del tomacorriente.</span>
-      </div>
-      <div class="precio" data-precio="powerbank"></div>
-      <div class="acciones" data-acciones="powerbank" data-nombre="Banco de energía EcoFlow" data-articulo="el"></div>
-    </div>
-  </article>
+  <div id="lista-productos"></div>
+  <p id="estado-catalogo" style="text-align:center;color:var(--gris);padding:24px 0" hidden></p>
 
 </main>
 
@@ -287,14 +65,11 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   <a class="enlace-tg" href="https://t.me/starlight_solutions" target="_blank" rel="noopener">📢 Síganos en Telegram: llegadas y ofertas</a>
 </footer>
 
-<!-- Contador de visitas (GoatCounter): gratis, sin cookies, ~3 KB. -->
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
 <script src="carrito.js?v=3"></script>
 <script>
 (function(){
-  // Botoncito "Compartir": abre el menú de compartir del teléfono o,
-  // si no existe, WhatsApp para elegir a quién mandárselo.
   function agregarCompartir(cont, nombre, id){
     var b = document.createElement("button");
     b.type = "button";
@@ -309,7 +84,6 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     cont.appendChild(b);
   }
 
-  // Dibuja los controles de un producto según su stock y precio reales.
   function render(cont){
     var id = cont.getAttribute("data-acciones");
     var nombre = cont.getAttribute("data-nombre");
@@ -319,7 +93,6 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     var pn = cont.getAttribute("data-precio-num");
     var precio = (pn === null || pn === "") ? null : parseFloat(pn);
 
-    // Agotado → casilla para dejar su número y avisarle cuando llegue
     if (stock !== null && stock <= 0){
       cont.innerHTML =
         '<div class="aviso-tel">' +
@@ -349,7 +122,6 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       return;
     }
 
-    // Disponible → selector de cantidad + agregar al pedido
     var max = (stock !== null) ? ' max="'+stock+'"' : '';
     cont.innerHTML =
       '<div class="cantidad">'+
@@ -383,22 +155,119 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     agregarCompartir(cont, nombre, id);
   }
 
-  // Render inicial: si la hoja no carga, todo se ve disponible y se puede pedir.
-  var conts = document.querySelectorAll("[data-acciones]");
-  conts.forEach(render);
-  document.querySelectorAll("[data-precio]").forEach(function(p){
-    p.innerHTML = "<em>Precio del día por WhatsApp</em>";
-  });
+  function construirProducto(c){
+    var id = (c[0] || "").trim().toLowerCase();
+    var producto = c[1] || "";
+    var categoria = c[4] || "";
+    var articulo = c[5] || "la";
+    var capacidad = (c[6] || "").trim();
+    var titulo = (c[8] || "").trim() || "¿Para qué sirve?";
+    var texto = (c[9] || "").trim();
 
-  // --- Filtros de categoría (se arman solos según data-categoria) ---
-  (function(){
+    var article = document.createElement("article");
+    article.className = "producto";
+    article.id = id;
+    article.setAttribute("data-categoria", categoria);
+
+    var img = document.createElement("img");
+    img.src = "fotos/" + id + ".jpg";
+    img.alt = producto;
+    img.loading = "lazy";
+    img.onerror = function(){ this.onerror = null; this.src = "fotos/proximamente.jpg"; };
+    article.appendChild(img);
+
+    var cuerpo = document.createElement("div");
+    var h2 = document.createElement("h2");
+    h2.textContent = producto;
+    cuerpo.appendChild(h2);
+
+    if (capacidad){
+      var cap = document.createElement("div");
+      cap.className = "capacidad";
+      cap.textContent = capacidad;
+      cuerpo.appendChild(cap);
+    }
+
+    var badge = document.createElement("span");
+    badge.className = "badge-stock disponible";
+    badge.setAttribute("data-stock", id);
+    badge.textContent = "Disponible";
+    cuerpo.appendChild(badge);
+
+    var specs = (c[7] || "").split("|").map(function(spec){ return spec.trim(); }).filter(function(spec){ return spec; });
+    if (specs.length){
+      var ul = document.createElement("ul");
+      ul.className = "specs";
+      specs.forEach(function(spec){
+        var li = document.createElement("li");
+        li.textContent = spec;
+        ul.appendChild(li);
+      });
+      cuerpo.appendChild(ul);
+    }
+
+    if (texto){
+      var info = document.createElement("div");
+      info.className = "enciende";
+      var strong = document.createElement("strong");
+      strong.textContent = titulo;
+      var span = document.createElement("span");
+      span.textContent = texto;
+      info.appendChild(strong);
+      info.appendChild(span);
+      cuerpo.appendChild(info);
+    }
+
+    var precio = document.createElement("div");
+    precio.className = "precio";
+    precio.setAttribute("data-precio", id);
+    cuerpo.appendChild(precio);
+
+    var acciones = document.createElement("div");
+    acciones.className = "acciones";
+    acciones.setAttribute("data-acciones", id);
+    acciones.setAttribute("data-nombre", producto);
+    acciones.setAttribute("data-articulo", articulo);
+    cuerpo.appendChild(acciones);
+
+    article.appendChild(cuerpo);
+    return article;
+  }
+
+  function finalizar(c){
+    var id = c[0].trim().toLowerCase();
+    var precioTxt = (c[2] || "").trim();
+    var stock = parseInt((c[3] || "").trim(), 10);
+    var pEl = document.querySelector('[data-precio="' + id + '"]');
+    var badge = document.querySelector('[data-stock="' + id + '"]');
+    var cont = document.querySelector('[data-acciones="' + id + '"]');
+
+    var precioNum = Carrito.precioNum(precioTxt);
+    cont.setAttribute("data-precio-num", precioNum === null ? "" : precioNum);
+    if (pEl){
+      if (precioTxt){ pEl.textContent = (precioNum !== null) ? (precioTxt + " USD") : precioTxt; }
+      else { pEl.innerHTML = "<em>Precio del día por WhatsApp</em>"; }
+    }
+
+    if (!isNaN(stock)){
+      cont.setAttribute("data-stock-num", stock);
+      if (badge){
+        if (stock <= 0){ badge.textContent = "Agotado por el momento"; badge.className = "badge-stock agotado"; }
+        else if (stock <= 3){ badge.textContent = "¡Quedan solo " + stock + "!"; badge.className = "badge-stock pocas"; }
+        else { badge.textContent = "Disponible"; badge.className = "badge-stock disponible"; }
+      }
+    }
+    render(cont);
+  }
+
+  function construirFiltros(){
     var productos = document.querySelectorAll(".producto[data-categoria]");
     var cats = [];
     productos.forEach(function(p){
       var c = p.getAttribute("data-categoria");
       if (c && cats.indexOf(c) === -1) cats.push(c);
     });
-    if (cats.length < 2) return;   // con una sola categoría no hacen falta filtros
+    if (cats.length < 2) return;
 
     var barra = document.getElementById("filtros");
     barra.hidden = false;
@@ -416,41 +285,66 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       });
       barra.appendChild(b);
     });
-  })();
+  }
 
-  // --- Lee inventario y precios desde Google Sheets ---
-  // Si la hoja no carga, se queda el estado por defecto (todo se puede pedir).
+  var lista = document.getElementById("lista-productos");
+  var estado = document.getElementById("estado-catalogo");
+  var filas = [];
+
+  function mostrarDesdeCache(){
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem("starlight_catalogo_v1")); } catch(e){}
+    if (!(Array.isArray(cached) && cached.length)) return false;
+    lista.innerHTML = "";
+    cached.forEach(function(c){
+      if (!(c && String(c[0] || "").trim())) return;
+      lista.appendChild(construirProducto(c));
+      finalizar(c);
+    });
+    construirFiltros();
+    return true;
+  }
+
+  estado.textContent = "Cargando productos…";
+  estado.hidden = false;
+
   Carrito.leerHoja(HOJA_URL, function(c){
-    var id = (c[0]||"").trim().toLowerCase();
-    var precioTxt = (c[2]||"").trim();
-    var stock = parseInt((c[3]||"").trim(), 10);
-    if (!id) return;
-
-    var badge = document.querySelector('[data-stock="'+id+'"]');
-    var pEl = document.querySelector('[data-precio="'+id+'"]');
-    var cont = document.querySelector('[data-acciones="'+id+'"]');
-    if (!cont) return;
-
-    // Precio: número para el carrito + texto (con USD) para mostrar.
-    var precioNum = Carrito.precioNum(precioTxt);
-    cont.setAttribute("data-precio-num", precioNum === null ? "" : precioNum);
-    if (pEl){
-      // textContent (no innerHTML): lo que venga de la hoja nunca entra como HTML
-      if (precioTxt){ pEl.textContent = (precioNum !== null) ? (precioTxt + " USD") : precioTxt; }
-      else { pEl.innerHTML = "<em>Precio del día por WhatsApp</em>"; }
+    if (!(c[0] || "").trim()) return;
+    filas.push(c);
+    lista.appendChild(construirProducto(c));
+    finalizar(c);
+  }, function(){
+    if (filas.length > 0){
+      estado.hidden = true;
+      localStorage.setItem("starlight_catalogo_v1", JSON.stringify(filas));
+      construirFiltros();
+      return;
     }
-
-    // Inventario (badge + tope de cantidad)
-    if (!isNaN(stock)){
-      cont.setAttribute("data-stock-num", stock);
-      if (badge){
-        if (stock <= 0){ badge.textContent = "Agotado por el momento"; badge.className = "badge-stock agotado"; }
-        else if (stock <= 3){ badge.textContent = "¡Quedan solo "+stock+"!"; badge.className = "badge-stock pocas"; }
-        else { badge.textContent = "Disponible"; badge.className = "badge-stock disponible"; }
-      }
+    if (mostrarDesdeCache()){
+      estado.textContent = "Mostrando la última lista guardada.";
+    } else {
+      estado.textContent = "No hay productos por el momento. Escríbanos por WhatsApp.";
     }
-
-    render(cont); // vuelve a dibujar con stock y precio reales
+    estado.hidden = false;
+  }, function(){
+    if (mostrarDesdeCache()){
+      estado.textContent = "Mostrando la última lista guardada.";
+      estado.hidden = false;
+    } else {
+      estado.textContent = "No se pudo cargar el catálogo. ";
+      var reintentar = document.createElement("a");
+      reintentar.href = "#";
+      reintentar.textContent = "Reintentar";
+      reintentar.addEventListener("click", function(e){ e.preventDefault(); location.reload(); });
+      estado.appendChild(reintentar);
+      estado.appendChild(document.createTextNode(" o escríbanos por "));
+      var whatsapp = document.createElement("a");
+      whatsapp.href = "https://wa.me/" + TELEFONO;
+      whatsapp.textContent = "WhatsApp";
+      estado.appendChild(whatsapp);
+      estado.appendChild(document.createTextNode("."));
+      estado.hidden = false;
+    }
   });
 })();
 </script>

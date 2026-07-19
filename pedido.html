@@ -6,8 +6,6 @@
 <title>Su pedido — Starlight Solutions</title>
 <meta name="description" content="Revise su pedido de equipos de energía y envíelo por WhatsApp. Entrega a domicilio disponible en Cárdenas.">
 
-<!-- Vista previa al compartir el enlace por WhatsApp.
-     Si cambias la dirección del sitio (GitHub Pages), actualiza la URL de og:image. -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Su pedido — Starlight Solutions">
 <meta property="og:description" content="Revise su pedido y envíelo por WhatsApp. Entrega a domicilio disponible en Cárdenas.">
@@ -17,25 +15,10 @@
 <link rel="stylesheet" href="estilos.css?v=3">
 <link rel="icon" href="fotos/logo.png">
 
-<!-- ============================================================
-     CONFIGURACIÓN — EDITA SOLO ESTA SECCIÓN
-     1. TELEFONO: tu WhatsApp con código de país, sin + ni espacios.
-     2. HOJA_DOMICILIOS_URL: el link CSV de la pestaña "domicilios"
-        de tu Google Sheet (columnas: zona | costo). Se publica
-        igual que el inventario. Si lo dejas vacío, el costo del
-        domicilio se coordina por WhatsApp.
-     3. HOJA_URL: el MISMO link CSV del inventario que está en
-        catalogo.html. Aquí sirve para refrescar los precios del
-        pedido y limitar las cantidades al stock real. Si se deja
-        vacío, se usan los datos guardados al agregar.
-     ============================================================ -->
 <script>
 const TELEFONO = "5363918876";
 const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmkm4fNBeANPSQ49hgyJtSiVMVNAZ2O31lNak_DgUhjjcJc0O63xUS2sCh23cRfoL8Nz/pub?gid=810667152&single=true&output=csv";
 const HOJA_DOMICILIOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmkm4fNBeANPSQ49hgyJtSiVMVNAZ2O31lNak_DgUhjjcJc0O63xUS2sCh23cRfoL8Nz/pub?gid=296761912&single=true&output=csv";
-// URL de la aplicación web de Apps Script (anota cada pedido como "Pendiente").
-// Debe estar publicada con acceso "Cualquier persona". Si se deja vacía, el
-// pedido se envía por WhatsApp igual, solo que no se anota en la hoja.
 const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gTarCLpDb30ksTUcnERDhWfdk-dnP-SZZPJ8MPzvjmgQmxFsUaIg/exec";
 </script>
 </head>
@@ -133,7 +116,6 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   <a class="enlace-tg" href="https://t.me/starlight_solutions" target="_blank" rel="noopener">📢 Síganos en Telegram: llegadas y ofertas</a>
 </footer>
 
-<!-- Contador de visitas (GoatCounter): gratis, sin cookies, ~3 KB. -->
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
 <script src="carrito.js?v=3"></script>
@@ -141,16 +123,15 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 (function(){
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
   function usd(n){ return (Math.round(n*100)/100).toLocaleString("en-US") + " USD"; }
-  // Los equipos se cobran en USD; la entrega a domicilio, en CUP.
   function cup(n){ return (Math.round(n*100)/100).toLocaleString("en-US") + " CUP"; }
   function titulo(s){
     s = (s||"").replace(/\s+/g," ").trim().toLowerCase();
     return s.replace(/(^|\s)(\S)/g, function(m,sp,ch){ return sp + ch.toUpperCase(); });
   }
 
-  var zonas = [];            // {nombre, costo}
-  var domicilioManual = false; // true = la hoja de zonas no cargó
-  var infoHoja = {};         // id -> {precio, stock} frescos de la hoja
+  var zonas = [];
+  var domicilioManual = false;
+  var infoHoja = {};
 
   var vacio = document.getElementById("pedido-vacio");
   var lleno = document.getElementById("pedido-lleno");
@@ -220,7 +201,6 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     } else {
       filaDom.hidden=true;
     }
-    // El total no mezcla monedas: equipos en USD + domicilio en CUP.
     document.getElementById("t-total").textContent = usd(sub) + (chk.checked && dom>0 ? " + "+cup(dom) : "");
   }
 
@@ -232,8 +212,6 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
   function cargarZonas(){
     var bloqueZona=document.getElementById("bloque-zona");
-    // Plan B: sin zonas (hoja vacía, sin url o sin conexión) el costo
-    // del domicilio se coordina por WhatsApp.
     function sinZonas(){ domicilioManual=true; bloqueZona.hidden=true; totales(); }
     Carrito.leerHoja(HOJA_DOMICILIOS_URL, function(c){
       var nombre=titulo(c[0]);
@@ -254,13 +232,8 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     }, sinZonas);
   }
 
-  // Refresca precios y stock desde la hoja del inventario (la misma del
-  // catálogo): así el pedido no sale con precios viejos ni con más
-  // cantidad que el stock real. Si la hoja no carga, todo sigue con lo
-  // guardado al agregar (el pedido nunca se rompe por la hoja).
   function refrescarHoja(){
     if (typeof HOJA_URL === "undefined") return;
-    // Si la hoja no carga, no hay plan B que hacer: se queda lo guardado.
     Carrito.leerHoja(HOJA_URL, function(c){
       var id=(c[0]||"").trim().toLowerCase();
       if(!id) return;
@@ -274,7 +247,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
         if(st!=null && st>0 && c[k].cantidad>st){ c[k].cantidad=st; cambio=true; }
       }
       if(cambio) Carrito.guardar(c);
-      pintar();   // repinta con precios y topes frescos
+      pintar();
     });
   }
 
@@ -299,14 +272,10 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     var items=Carrito.items();
     if(!items.length) return;
 
-    // Se desactiva un momento: un doble toque no debe anotar el pedido dos veces
     var btnEnviar=document.getElementById("enviar");
     btnEnviar.disabled=true;
     setTimeout(function(){ btnEnviar.disabled=false; },4000);
 
-    // Código corto del pedido: va en el WhatsApp y en la fila de la
-    // pestaña "Pedidos", para casarlos fácil. Sin caracteres que se
-    // confunden (0/O, 1/I/L).
     var abc="ABCDEFGHJKMNPQRSTUVWXYZ23456789", cod="SL-";
     for(var ci=0;ci<4;ci++) cod+=abc[Math.floor(Math.random()*abc.length)];
 
@@ -348,9 +317,6 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     L.push("");
     L.push("Pago: efectivo USD o Zelle. Domicilio en CUP.");
 
-    // Anota el pedido en la hoja (Apps Script) como "Pendiente".
-    // keepalive: se completa aunque la página navegue a WhatsApp enseguida.
-    // Nunca bloquea el envío: si falla, el pedido va por WhatsApp igual.
     if (PEDIDOS_URL){
       try {
         var payload = {

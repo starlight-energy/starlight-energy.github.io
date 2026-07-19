@@ -1,9 +1,3 @@
-/* ============================================================
-   Carrito de pedidos de Starlight Solutions
-   Se guarda en el navegador del cliente (localStorage), así no
-   se pierde si recarga la página. Lo usan catalogo.html (para
-   agregar) y pedido.html (para revisar y enviar por WhatsApp).
-   ============================================================ */
 (function () {
   var CLAVE = "starlight_pedido_v1";
 
@@ -19,13 +13,12 @@
     actualizarInsignia();
   }
 
-  // datos = { nombre, articulo:"el"|"la", precio:Number|null, tope:Number|null }
   function agregar(id, datos, cant) {
     var c = cargar();
     cant = Math.max(1, parseInt(cant, 10) || 1);
     if (c[id]) {
       c[id].cantidad += cant;
-      c[id].precio = datos.precio;          // refresca el precio por si cambió
+      c[id].precio = datos.precio;
     } else {
       c[id] = {
         nombre: datos.nombre,
@@ -64,10 +57,6 @@
     return arr;
   }
 
-  // --- Ayudas compartidas para leer la hoja de Google (CSV) ---
-
-  // Separa una línea CSV por comas respetando comillas dobles
-  // (ej.: "1,200 USD" no se parte). La usan catalogo.html y pedido.html.
   function csvFila(linea) {
     var c = [], campo = "", dentro = false;
     for (var i = 0; i < linea.length; i++) {
@@ -80,9 +69,6 @@
     return c;
   }
 
-  // Convierte el texto de precio de la hoja a número, o null si tiene
-  // letras ("Consultar") o está vacío. Acepta "650", "650.50", "1,200"
-  // y también "1.200" escrito con punto de miles.
   function precioNum(txt) {
     txt = String(txt == null ? "" : txt).trim();
     if (!txt || !/^[\d.,\s]+$/.test(txt)) return null;
@@ -92,11 +78,6 @@
     return isNaN(n) ? null : n;
   }
 
-  // Lee una hoja de Google publicada como CSV y entrega cada fila de
-  // datos (sin el encabezado) ya separada en columnas: porFila(columnas).
-  // Al terminar todas las filas llama alTerminar(); si la hoja no carga
-  // (o no hay url) llama siFalla(). Regla del sitio: un fallo de la
-  // hoja NUNCA debe romper la página — quien llama decide el plan B.
   function leerHoja(url, porFila, alTerminar, siFalla) {
     if (!url) { if (siFalla) siFalla(); return; }
     fetch(url, { cache: "no-store" })
@@ -111,7 +92,6 @@
       .catch(function () { if (siFalla) siFalla(); });
   }
 
-  // Pinta el contador y muestra/oculta el botón flotante "Ver mi pedido"
   function actualizarInsignia() {
     var n = contar();
     document.querySelectorAll("[data-carrito-cuenta]").forEach(function (el) {
