@@ -5,6 +5,8 @@ name: Pruebas
 on:
   push:
     branches: [main]
+permissions:
+  contents: read
 jobs:
   pruebas:
     runs-on: ubuntu-latest

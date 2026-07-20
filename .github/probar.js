@@ -46,6 +46,21 @@ for (const [linea, esperado] of casosCsv) {
 }
 console.log(`✓ csvFila: ${casosCsv.length} casos correctos`);
 
+// Un producto se oculta SOLO si la columna 11 dice "no" (con o sin
+// espacios/mayúsculas); vacía, ausente o cualquier otro texto = visible.
+const casosOculto = [
+  [["delta2", "P", "1", "2", "", "", "", "", "", "", "no"], true],
+  [["delta2", "P", "1", "2", "", "", "", "", "", "", " NO "], true],
+  [["delta2", "P", "1", "2", "", "", "", "", "", "", ""], false],
+  [["delta2", "P", "1", "2"], false],
+  [["delta2", "P", "1", "2", "", "", "", "", "", "", "si"], false]
+];
+for (const [fila, esperado] of casosOculto) {
+  const got = C.esOculto(fila);
+  if (got !== esperado) { console.error(`✗ esOculto(col11=${JSON.stringify(fila[10])}) = ${got}, esperaba ${esperado}`); process.exit(1); }
+}
+console.log(`✓ esOculto: ${casosOculto.length} casos correctos`);
+
 // 3) El carrito respeta el tope de stock al agregar
 const guardado = {};
 global.localStorage = {
