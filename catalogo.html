@@ -70,11 +70,6 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 <script src="carrito.js?v=3"></script>
 <script>
 (function(){
-  function esOculto(c){
-    var v = String(c[10] || "").trim().toLowerCase();
-    return v === "no";
-  }
-
   function agregarCompartir(cont, nombre, id){
     var b = document.createElement("button");
     b.type = "button";
@@ -303,7 +298,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     lista.innerHTML = "";
     cached.forEach(function(c){
       if (!(c && String(c[0] || "").trim())) return;
-      if (esOculto(c)) return;
+      if (Carrito.esOculto(c)) return;
       lista.appendChild(construirProducto(c));
       finalizar(c);
     });
@@ -316,7 +311,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
   Carrito.leerHoja(HOJA_URL, function(c){
     if (!(c[0] || "").trim()) return;
-    if (esOculto(c)) return;
+    if (Carrito.esOculto(c)) return;
     filas.push(c);
     lista.appendChild(construirProducto(c));
     finalizar(c);

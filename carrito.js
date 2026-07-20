@@ -106,7 +106,8 @@
     cargar: cargar, guardar: guardar, agregar: agregar,
     fijarCantidad: fijarCantidad, quitar: quitar,
     contar: contar, items: items, actualizarInsignia: actualizarInsignia,
-    csvFila: csvFila, precioNum: precioNum, leerHoja: leerHoja
+    csvFila: csvFila, precioNum: precioNum, leerHoja: leerHoja,
+    esOculto: function (c) { return String(c[10] == null ? "" : c[10]).trim().toLowerCase() === "no"; }
   };
 
   document.addEventListener("DOMContentLoaded", actualizarInsignia);

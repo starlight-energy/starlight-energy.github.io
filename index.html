@@ -16,7 +16,10 @@
 <link rel="stylesheet" href="estilos.css?v=3">
 <link rel="icon" href="fotos/logo.png">
 
-<script>const TELEFONO = "5363918876";</script>
+<script>
+const TELEFONO = "5363918876";
+const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmkm4fNBeANPSQ49hgyJtSiVMVNAZ2O31lNak_DgUhjjcJc0O63xUS2sCh23cRfoL8Nz/pub?gid=810667152&single=true&output=csv";
+</script>
 </head>
 <body>
 
@@ -80,56 +83,10 @@
   </div>
 </section>
 
-<section class="contenedor">
+<section class="contenedor" id="seccion-productos">
   <h2 class="titulo">Nuestros productos</h2>
   <p class="sub">Disponibilidad y precios actualizados en el catálogo.</p>
-  <div class="previas">
-    <a class="previa" href="catalogo.html#delta2">
-      <h3>EcoFlow Delta 2</h3>
-      <p>1024 Wh · Ideal para refrigerador, ventilador, TV y luces durante los apagones.</p>
-      <span class="ver">Ver detalles →</span>
-    </a>
-    <a class="previa" href="catalogo.html#delta3">
-      <h3>EcoFlow Delta 3 Classic</h3>
-      <p>1024 Wh · El modelo más reciente: carga en 45 minutos y batería de 4000 ciclos.</p>
-      <span class="ver">Ver detalles →</span>
-    </a>
-    <a class="previa" href="catalogo.html#river2">
-      <h3>EcoFlow River 2 Pro</h3>
-      <p>768 Wh · La opción más económica: ventilador, TV, luces y teléfonos.</p>
-      <span class="ver">Ver detalles →</span>
-    </a>
-    <a class="previa" href="catalogo.html#sumry">
-      <h3>Inversor Sumry 4000 W</h3>
-      <p>Para instalación fija: mantiene toda la casa funcionando con sus baterías.</p>
-      <span class="ver">Ver detalles →</span>
-    </a>
-    <a class="previa" href="catalogo.html#bateria">
-      <h3>Batería LiFePO4 12.8V 200Ah</h3>
-      <p>2560 Wh de litio para su inversor y respaldo del hogar.</p>
-      <span class="ver">Ver detalles →</span>
-    </a>
-    <a class="previa" href="catalogo.html#cablemc4">
-      <h3>Cable solar MC4 a XT60i</h3>
-      <p>Conecte un panel solar a su EcoFlow y cargue con el sol.</p>
-      <span class="ver">Ver detalles →</span>
-    </a>
-    <a class="previa" href="catalogo.html#mc4">
-      <h3>Conectores MC4</h3>
-      <p>Conexiones seguras para instalaciones solares.</p>
-      <span class="ver">Ver detalles →</span>
-    </a>
-    <a class="previa" href="catalogo.html#luzsolar">
-      <h3>Lámpara solar 504 LED</h3>
-      <p>Luz de exterior con sensor y control remoto, sin cables ni consumo.</p>
-      <span class="ver">Ver detalles →</span>
-    </a>
-    <a class="previa" href="catalogo.html#powerbank">
-      <h3>Banco de energía EcoFlow</h3>
-      <p>Batería portátil de carga rápida para su teléfono.</p>
-      <span class="ver">Ver detalles →</span>
-    </a>
-  </div>
+  <div class="previas" id="previas-productos"></div>
 </section>
 
 <section class="contenedor">
@@ -231,6 +188,61 @@
 <script src="carrito.js?v=3"></script>
 <script>
 (function(){
+  function construirPrevia(c){
+    var id = (c[0] || "").trim().toLowerCase();
+    var nombre = c[1] || "";
+    var texto = (c[9] || "").trim();
+    var capacidad = (c[6] || "").trim();
+    var blurb = texto || capacidad;
+    var a = document.createElement("a");
+    a.className = "previa";
+    a.href = "catalogo.html#" + id;
+    var h3 = document.createElement("h3");
+    h3.textContent = nombre;
+    a.appendChild(h3);
+    if (blurb){
+      var p = document.createElement("p");
+      p.textContent = blurb;
+      a.appendChild(p);
+    }
+    var span = document.createElement("span");
+    span.className = "ver";
+    span.textContent = "Ver detalles →";
+    a.appendChild(span);
+    return a;
+  }
+
+  var contPrevias = document.getElementById("previas-productos");
+  var seccionProductos = document.getElementById("seccion-productos");
+
+  function pintarPrevias(filas){
+    contPrevias.innerHTML = "";
+    filas.forEach(function(c){
+      if (!(c[0] || "").trim()) return;
+      if (Carrito.esOculto(c)) return;
+      contPrevias.appendChild(construirPrevia(c));
+    });
+    if (contPrevias.children.length === 0) seccionProductos.hidden = true;
+    else seccionProductos.hidden = false;
+  }
+
+  function pintarPreviasDesdeCache(){
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem("starlight_catalogo_v1")); } catch(e){}
+    if (Array.isArray(cached) && cached.length){ pintarPrevias(cached); }
+    else { seccionProductos.hidden = true; }
+  }
+
+  var filasPrevias = [];
+  Carrito.leerHoja(HOJA_URL, function(c){
+    filasPrevias.push(c);
+  }, function(){
+    if (filasPrevias.length > 0){ pintarPrevias(filasPrevias); }
+    else { pintarPreviasDesdeCache(); }
+  }, function(){
+    pintarPreviasDesdeCache();
+  });
+
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
   var h=document.getElementById("wa-hero");
   var c=document.getElementById("wa-contacto");
