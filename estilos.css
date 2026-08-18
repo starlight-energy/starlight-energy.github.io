@@ -113,6 +113,7 @@ h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em
   text-transform:uppercase;color:var(--azul);margin-bottom:4px;
 }
 .enciende span{font-size:15px}
+.oferta-producto{background:var(--dorado-fondo);border:1px solid var(--dorado);color:var(--azul);font-weight:700;border-radius:8px;padding:6px 10px;margin:8px 0;font-size:14px}
 .precio{margin-top:18px;font-size:18px;font-weight:800;color:var(--azul)}
 .precio em{font-style:normal;color:var(--gris);font-weight:500;font-size:15px}
 .producto .btn{width:100%;margin-top:12px}

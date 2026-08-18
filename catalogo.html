@@ -13,7 +13,7 @@
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
 
-<link rel="stylesheet" href="estilos.css?v=4">
+<link rel="stylesheet" href="estilos.css?v=5">
 <link rel="icon" href="fotos/logo.png">
 
 <script>
@@ -217,6 +217,14 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       info.appendChild(strong);
       info.appendChild(span);
       cuerpo.appendChild(info);
+    }
+
+    var ofertaTexto = String(c[11] || "").trim();
+    if (ofertaTexto){
+      var oferta = document.createElement("div");
+      oferta.className = "oferta-producto";
+      oferta.textContent = "🏷️ " + ofertaTexto;
+      cuerpo.appendChild(oferta);
     }
 
     var precio = document.createElement("div");
