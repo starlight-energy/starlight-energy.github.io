@@ -12,7 +12,7 @@
 <meta property="og:locale" content="es_ES">
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
-<link rel="stylesheet" href="estilos.css?v=3">
+<link rel="stylesheet" href="estilos.css?v=4">
 <link rel="icon" href="fotos/logo.png">
 
 <script>
@@ -118,7 +118,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js?v=3"></script>
+<script src="carrito.js?v=4"></script>
 <script>
 (function(){
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
@@ -229,7 +229,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
         sel.appendChild(o);
       });
       totales();
-    }, sinZonas);
+    }, sinZonas, {encabezado:["zona","costo"]});
   }
 
   function refrescarHoja(){
@@ -248,7 +248,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       }
       if(cambio) Carrito.guardar(c);
       pintar();
-    });
+    }, null, {encabezado:["id","producto","precio","stock"]});
   }
 
   document.getElementById("enviar").addEventListener("click",function(){
@@ -332,6 +332,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       } catch(e){}
     }
 
+    try{ if(window.goatcounter && goatcounter.count) goatcounter.count({path:"evento/enviar-pedido", title:"Enviar pedido por WhatsApp", event:true}); }catch(e){}
     window.location.href = wa(L.join("\n"));
   });
 

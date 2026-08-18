@@ -13,7 +13,7 @@
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
 
-<link rel="stylesheet" href="estilos.css?v=3">
+<link rel="stylesheet" href="estilos.css?v=4">
 <link rel="icon" href="fotos/logo.png">
 
 <script>
@@ -185,7 +185,7 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
 
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js?v=3"></script>
+<script src="carrito.js?v=4"></script>
 <script>
 (function(){
   function construirPrevia(c){
@@ -229,7 +229,20 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
   function pintarPreviasDesdeCache(){
     var cached = null;
     try { cached = JSON.parse(localStorage.getItem("starlight_catalogo_v1")); } catch(e){}
-    if (Array.isArray(cached) && cached.length){ pintarPrevias(cached); }
+    var fecha = null;
+    var filas = null;
+    if (Array.isArray(cached)) filas = cached;
+    else if (cached && Array.isArray(cached.filas)){ fecha = cached.fecha; filas = cached.filas; }
+    if (filas && filas.length){
+      pintarPrevias(filas);
+      if (!(typeof fecha === "number" && isFinite(fecha) && Date.now() - fecha <= 86400000)){
+        var dias = typeof fecha === "number" && isFinite(fecha) ? Math.max(1, Math.floor((Date.now() - fecha) / 86400000)) : 1;
+        var aviso = document.createElement("p");
+        aviso.className = "aviso-cache";
+        aviso.textContent = "Precios guardados de hace " + dias + " día(s) — confirme por WhatsApp";
+        contPrevias.parentNode.insertBefore(aviso, contPrevias);
+      }
+    }
     else { seccionProductos.hidden = true; }
   }
 
@@ -241,7 +254,7 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
     else { pintarPreviasDesdeCache(); }
   }, function(){
     pintarPreviasDesdeCache();
-  });
+  }, {encabezado:["id","producto","precio","stock"]});
 
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
   var h=document.getElementById("wa-hero");

@@ -13,7 +13,7 @@
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
 
-<link rel="stylesheet" href="estilos.css?v=3">
+<link rel="stylesheet" href="estilos.css?v=4">
 <link rel="icon" href="fotos/logo.png">
 
 <script>
@@ -67,7 +67,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js?v=3"></script>
+<script src="carrito.js?v=4"></script>
 <script>
 (function(){
   function agregarCompartir(cont, nombre, id){
@@ -147,6 +147,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     btn.addEventListener("click", function(){
       var cant = clamp();
       Carrito.agregar(id, {nombre:nombre, articulo:articulo, precio:precio, tope:stock}, cant);
+      try{ if(window.goatcounter && goatcounter.count) goatcounter.count({path:"evento/agregar-"+id, title:"Agregar: "+nombre, event:true}); }catch(e){}
       btn.textContent = "✓ Agregado";
       btn.classList.add("ok");
       input.value = 1;
@@ -291,17 +292,34 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   var estado = document.getElementById("estado-catalogo");
   var filas = [];
 
-  function mostrarDesdeCache(){
+  function leerCache(){
     var cached = null;
     try { cached = JSON.parse(localStorage.getItem("starlight_catalogo_v1")); } catch(e){}
-    if (!(Array.isArray(cached) && cached.length)) return false;
+    if (Array.isArray(cached)) return {fecha:null, filas:cached};
+    if (cached && Array.isArray(cached.filas)) return {fecha:cached.fecha, filas:cached.filas};
+    return null;
+  }
+
+  function avisarCache(fecha){
+    if (typeof fecha === "number" && isFinite(fecha) && Date.now() - fecha <= 86400000) return;
+    var dias = typeof fecha === "number" && isFinite(fecha) ? Math.max(1, Math.floor((Date.now() - fecha) / 86400000)) : 1;
+    var aviso = document.createElement("p");
+    aviso.className = "aviso-cache";
+    aviso.textContent = "Precios guardados de hace " + dias + " día(s) — confirme por WhatsApp";
+    lista.parentNode.insertBefore(aviso, lista);
+  }
+
+  function mostrarDesdeCache(){
+    var cached = leerCache();
+    if (!(cached && cached.filas.length)) return false;
     lista.innerHTML = "";
-    cached.forEach(function(c){
+    cached.filas.forEach(function(c){
       if (!(c && String(c[0] || "").trim())) return;
       if (Carrito.esOculto(c)) return;
       lista.appendChild(construirProducto(c));
       finalizar(c);
     });
+    avisarCache(cached.fecha);
     construirFiltros();
     return true;
   }
@@ -318,7 +336,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   }, function(){
     if (filas.length > 0){
       estado.hidden = true;
-      localStorage.setItem("starlight_catalogo_v1", JSON.stringify(filas));
+      localStorage.setItem("starlight_catalogo_v1", JSON.stringify({fecha:Date.now(), filas:filas}));
       construirFiltros();
       return;
     }
@@ -347,7 +365,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       estado.appendChild(document.createTextNode("."));
       estado.hidden = false;
     }
-  });
+  }, {encabezado:["id","producto","precio","stock"]});
 })();
 </script>
 

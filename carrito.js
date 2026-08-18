@@ -69,6 +69,43 @@
     return c;
   }
 
+  function csvDoc(texto) {
+    var filas = [], fila = [], campo = "", dentro = false;
+
+    function terminarFila() {
+      fila.push(campo);
+      if (!(fila.length === 1 && !String(fila[0]).trim())) filas.push(fila);
+      fila = [];
+      campo = "";
+    }
+
+    texto = String(texto == null ? "" : texto);
+    for (var i = 0; i < texto.length; i++) {
+      var ch = texto[i];
+      if (ch === '"') {
+        if (dentro && texto[i + 1] === '"') {
+          campo += '"';
+          i++;
+        } else {
+          dentro = !dentro;
+        }
+      } else if (ch === "," && !dentro) {
+        fila.push(campo);
+        campo = "";
+      } else if (ch === "\n" && !dentro) {
+        terminarFila();
+      } else if (ch === "\r" && !dentro && texto[i + 1] === "\n") {
+        terminarFila();
+        i++;
+      } else {
+        campo += ch;
+      }
+    }
+    if (dentro) throw new Error("CSV inválido");
+    if (fila.length || campo) terminarFila();
+    return filas;
+  }
+
   function precioNum(txt) {
     txt = String(txt == null ? "" : txt).trim();
     if (!txt || !/^[\d.,\s]+$/.test(txt)) return null;
@@ -78,15 +115,30 @@
     return isNaN(n) ? null : n;
   }
 
-  function leerHoja(url, porFila, alTerminar, siFalla) {
+  function leerHoja(url, porFila, alTerminar, siFalla, opciones) {
     if (!url) { if (siFalla) siFalla(); return; }
     fetch(url, { cache: "no-store" })
-      .then(function (r) { return r.text(); })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP");
+        return r.text();
+      })
       .then(function (csv) {
-        csv.split(/\r?\n/).slice(1).forEach(function (linea) {
-          if (!linea.trim()) return;
-          porFila(csvFila(linea));
-        });
+        if (!String(csv).trim()) throw new Error("CSV vacío");
+        var filas = csvDoc(csv);
+        if (!filas.length) throw new Error("CSV vacío");
+        var esperado = opciones && Array.isArray(opciones.encabezado) ? opciones.encabezado : null;
+        if (esperado) {
+          var real = filas[0];
+          for (var i = 0; i < esperado.length; i++) {
+            if (String(real[i] == null ? "" : real[i]).trim().toLowerCase() !== String(esperado[i]).trim().toLowerCase()) {
+              throw new Error("Encabezado inválido");
+            }
+          }
+          for (var j = 1; j < filas.length; j++) {
+            if (filas[j].length < esperado.length) throw new Error("Fila incompleta");
+          }
+        }
+        filas.slice(1).forEach(function (fila) { porFila(fila); });
         if (alTerminar) alTerminar();
       })
       .catch(function () { if (siFalla) siFalla(); });
@@ -106,7 +158,7 @@
     cargar: cargar, guardar: guardar, agregar: agregar,
     fijarCantidad: fijarCantidad, quitar: quitar,
     contar: contar, items: items, actualizarInsignia: actualizarInsignia,
-    csvFila: csvFila, precioNum: precioNum, leerHoja: leerHoja,
+    csvFila: csvFila, csvDoc: csvDoc, precioNum: precioNum, leerHoja: leerHoja,
     esOculto: function (c) { return String(c[10] == null ? "" : c[10]).trim().toLowerCase() === "no"; }
   };
 

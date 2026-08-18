@@ -75,21 +75,62 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
 
 // 4) leerHoja: entrega filas respetando comillas, y degrada bien si falla
 (async () => {
-  const filas = [];
-  global.fetch = () => Promise.resolve({ text: () => Promise.resolve('id,producto,precio,stock\ndelta2,"EcoFlow, Delta 2",650,5\n\n') });
-  await new Promise((fin) => C.leerHoja("https://hoja", (c) => filas.push(c), fin,
-    () => { console.error("✗ leerHoja: no debía fallar"); process.exit(1); }));
-  if (filas.length !== 1 || filas[0][1] !== "EcoFlow, Delta 2") { console.error(`✗ leerHoja filas: ${JSON.stringify(filas)}`); process.exit(1); }
+  const encabezado = { encabezado: ["id", "producto", "precio", "stock"] };
 
-  let fallo = false;
-  global.fetch = () => Promise.reject(new Error("sin conexión"));
-  await new Promise((fin) => C.leerHoja("https://hoja", () => {}, null, () => { fallo = true; fin(); }));
-  if (!fallo) { console.error("✗ leerHoja: sin conexión no llamó siFalla"); process.exit(1); }
+  function ejecutarHoja(fetchActual, opciones, url = "https://hoja") {
+    const resultado = { filas: [], termino: false, fallo: false };
+    global.fetch = fetchActual;
+    return new Promise((fin) => {
+      C.leerHoja(url, (c) => resultado.filas.push(c), () => {
+        resultado.termino = true;
+        fin(resultado);
+      }, () => {
+        resultado.fallo = true;
+        fin(resultado);
+      }, opciones);
+    });
+  }
 
-  fallo = false;
-  await new Promise((fin) => { C.leerHoja("", () => {}, null, () => { fallo = true; }); fin(); });
-  if (!fallo) { console.error("✗ leerHoja: con url vacía no llamó siFalla"); process.exit(1); }
-  console.log("✓ leerHoja: filas con comillas, fallo de red y url vacía");
+  function respuesta(csv, ok = true) {
+    return () => Promise.resolve({ ok, text: () => Promise.resolve(csv) });
+  }
 
+  function exigir(condicion, mensaje) {
+    if (!condicion) { console.error("✗ " + mensaje); process.exit(1); }
+  }
+
+  exigir(typeof C.csvDoc === "function", "csvDoc no está expuesto");
+
+  let resultado = await ejecutarHoja(respuesta('id,producto,precio,stock\ndelta2,"EcoFlow, Delta 2",650,5\n\n'));
+  exigir(resultado.termino && !resultado.fallo && resultado.filas.length === 1 && resultado.filas[0][1] === "EcoFlow, Delta 2", `leerHoja retrocompatible: ${JSON.stringify(resultado)}`);
+
+  resultado = await ejecutarHoja(() => Promise.reject(new Error("sin conexión")));
+  exigir(resultado.fallo && resultado.filas.length === 0, "leerHoja: sin conexión no llamó siFalla sin emitir filas");
+
+  resultado = await ejecutarHoja(respuesta(""), undefined, "");
+  exigir(resultado.fallo && resultado.filas.length === 0, "leerHoja: con url vacía no llamó siFalla sin emitir filas");
+
+  resultado = await ejecutarHoja(respuesta("error", false), encabezado);
+  exigir(resultado.fallo && !resultado.termino && resultado.filas.length === 0, "leerHoja: HTTP 500 no falló atómicamente");
+
+  resultado = await ejecutarHoja(respuesta("zona,costo\nCentro,200"), encabezado);
+  exigir(resultado.fallo && resultado.filas.length === 0, "leerHoja: aceptó un encabezado equivocado");
+
+  resultado = await ejecutarHoja(respuesta("id,producto,precio,stock\ndelta2,Delta 2,650,5\nriver2,River 2,500"), encabezado);
+  exigir(resultado.fallo && resultado.filas.length === 0, "leerHoja: emitió filas antes de detectar una fila incompleta");
+
+  resultado = await ejecutarHoja(respuesta('id,producto,precio,stock\ndelta2,"EcoFlow ""Delta"" 2",650,5'), encabezado);
+  exigir(resultado.termino && resultado.filas.length === 1 && resultado.filas[0][1] === 'EcoFlow "Delta" 2', `leerHoja: comillas escapadas incorrectas ${JSON.stringify(resultado.filas)}`);
+
+  resultado = await ejecutarHoja(respuesta('id,producto,precio,stock\ndelta2,"EcoFlow\nDelta 2",650,5'), encabezado);
+  exigir(resultado.termino && resultado.filas.length === 1 && resultado.filas[0][1] === "EcoFlow\nDelta 2", `leerHoja: celda multilínea incorrecta ${JSON.stringify(resultado.filas)}`);
+
+  resultado = await ejecutarHoja(respuesta(""), encabezado);
+  exigir(resultado.fallo && resultado.filas.length === 0, "leerHoja: el cuerpo vacío no llamó siFalla");
+
+  resultado = await ejecutarHoja(respuesta("id,producto,precio,stock,detalle\ndelta2,Delta 2,650,5,Nuevo"), encabezado);
+  exigir(resultado.termino && !resultado.fallo && resultado.filas.length === 1 && resultado.filas[0].length === 5, "leerHoja: rechazó columnas extra");
+
+  console.log("✓ leerHoja: parseo documental, validación y emisión atómica");
   console.log("TODO OK");
 })();

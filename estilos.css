@@ -172,6 +172,7 @@ h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em
   cursor:pointer;font-family:inherit;
 }
 .chip.activo{background:var(--azul);border-color:var(--azul);color:#fff}
+.aviso-cache{background:var(--dorado-fondo);color:var(--azul);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13.5px}
 
 .aviso-tel{flex:1 1 100%;margin-top:4px}
 .aviso-txt{display:block;font-size:13.5px;color:var(--gris);font-weight:600;margin-bottom:8px}
