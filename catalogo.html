@@ -13,7 +13,7 @@
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
 
-<link rel="stylesheet" href="estilos.css?v=5">
+<link rel="stylesheet" href="estilos.css?v=6">
 <link rel="icon" href="fotos/logo.png">
 
 <script>
@@ -67,7 +67,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js?v=4"></script>
+<script src="carrito.js?v=5"></script>
 <script>
 (function(){
   function agregarCompartir(cont, nombre, id){
@@ -94,30 +94,8 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     var precio = (pn === null || pn === "") ? null : parseFloat(pn);
 
     if (stock !== null && stock <= 0){
-      cont.innerHTML =
-        '<div class="aviso-tel">' +
-          '<span class="aviso-txt">Deje su número de WhatsApp y le escribimos en cuanto llegue:</span>' +
-          '<div class="aviso-fila">' +
-            '<input type="tel" inputmode="tel" placeholder="Su número de WhatsApp" aria-label="Su número de WhatsApp">' +
-            '<button type="button" class="btn btn-azul btn-aviso">Avisarme</button>' +
-          '</div>' +
-        '</div>';
-      var inp = cont.querySelector(".aviso-tel input");
-      var bAviso = cont.querySelector(".btn-aviso");
-      bAviso.addEventListener("click", function(){
-        var telCliente = (inp.value || "").replace(/[^\d+]/g, "");
-        if (telCliente.replace(/\D/g,"").length < 8){
-          inp.classList.add("error-campo"); inp.focus(); return;
-        }
-        if (PEDIDOS_URL){
-          try {
-            fetch(PEDIDOS_URL, {method:"POST", mode:"no-cors", keepalive:true,
-              headers:{"Content-Type":"text/plain;charset=utf-8"},
-              body: JSON.stringify({accion:"aviso", id:id, producto:nombre, telefono:telCliente})});
-          } catch(e){}
-        }
-        cont.querySelector(".aviso-tel").innerHTML = '<span class="aviso-ok">✓ Anotado. Le escribiremos por WhatsApp cuando llegue.</span>';
-      });
+      cont.innerHTML = "";
+      Carrito.pintarAviso(cont, {id:id, nombre:nombre, viene:cont.getAttribute("data-viene") === "1", url:PEDIDOS_URL});
       agregarCompartir(cont, nombre, id);
       return;
     }
@@ -156,14 +134,16 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     agregarCompartir(cont, nombre, id);
   }
 
-  function construirProducto(c){
+  // `enc` = encabezado de la hoja (null en una caché vieja): las columnas se
+  // buscan por nombre y, si no están, en su posición de siempre.
+  function construirProducto(c, enc){
     var id = (c[0] || "").trim().toLowerCase();
     var producto = c[1] || "";
-    var categoria = c[4] || "";
-    var articulo = c[5] || "la";
-    var capacidad = (c[6] || "").trim();
-    var titulo = (c[8] || "").trim() || "¿Para qué sirve?";
-    var texto = (c[9] || "").trim();
+    var categoria = Carrito.celda(c, enc, "categoria", 4);
+    var articulo = Carrito.celda(c, enc, "articulo", 5) || "la";
+    var capacidad = Carrito.celda(c, enc, "capacidad", 6).trim();
+    var titulo = Carrito.celda(c, enc, "titulo", 8).trim() || "¿Para qué sirve?";
+    var texto = Carrito.celda(c, enc, "texto", 9).trim();
 
     var article = document.createElement("article");
     article.className = "producto";
@@ -195,7 +175,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     badge.textContent = "Disponible";
     cuerpo.appendChild(badge);
 
-    var specs = (c[7] || "").split("|").map(function(spec){ return spec.trim(); }).filter(function(spec){ return spec; });
+    var specs = Carrito.celda(c, enc, "specs", 7).split("|").map(function(spec){ return spec.trim(); }).filter(function(spec){ return spec; });
     if (specs.length){
       var ul = document.createElement("ul");
       ul.className = "specs";
@@ -219,7 +199,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       cuerpo.appendChild(info);
     }
 
-    var ofertaTexto = String(c[11] || "").trim();
+    var ofertaTexto = Carrito.celda(c, enc, "oferta", 11).trim();
     if (ofertaTexto){
       var oferta = document.createElement("div");
       oferta.className = "oferta-producto";
@@ -243,7 +223,9 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     return article;
   }
 
-  function finalizar(c){
+  // desdeCache = true cuando la lista es la guardada: nunca promete
+  // "vienen en camino" (D44) ni olvida un aviso anotado.
+  function finalizar(c, enc, desdeCache){
     var id = c[0].trim().toLowerCase();
     var precioTxt = (c[2] || "").trim();
     var stock = parseInt((c[3] || "").trim(), 10);
@@ -260,11 +242,10 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
     if (!isNaN(stock)){
       cont.setAttribute("data-stock-num", stock);
-      if (badge){
-        if (stock <= 0){ badge.textContent = "Agotado por el momento"; badge.className = "badge-stock agotado"; }
-        else if (stock <= 3){ badge.textContent = "¡Quedan solo " + stock + "!"; badge.className = "badge-stock pocas"; }
-        else { badge.textContent = "Disponible"; badge.className = "badge-stock disponible"; }
-      }
+      var est = Carrito.insignia(c, enc, desdeCache);
+      cont.setAttribute("data-viene", est && est.clase === "viene" ? "1" : "");
+      if (badge && est){ badge.textContent = est.texto; badge.className = "badge-stock " + est.clase; }
+      if (stock > 0 && !desdeCache) Carrito.olvidarAviso(id);
     }
     render(cont);
   }
@@ -300,32 +281,23 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   var estado = document.getElementById("estado-catalogo");
   var filas = [];
 
-  function leerCache(){
-    var cached = null;
-    try { cached = JSON.parse(localStorage.getItem("starlight_catalogo_v1")); } catch(e){}
-    if (Array.isArray(cached)) return {fecha:null, filas:cached};
-    if (cached && Array.isArray(cached.filas)) return {fecha:cached.fecha, filas:cached.filas};
-    return null;
-  }
-
+  // D44: la lista guardada lleva su antigüedad arriba, sea cual sea.
   function avisarCache(fecha){
-    if (typeof fecha === "number" && isFinite(fecha) && Date.now() - fecha <= 86400000) return;
-    var dias = typeof fecha === "number" && isFinite(fecha) ? Math.max(1, Math.floor((Date.now() - fecha) / 86400000)) : 1;
     var aviso = document.createElement("p");
     aviso.className = "aviso-cache";
-    aviso.textContent = "Precios guardados de hace " + dias + " día(s) — confirme por WhatsApp";
+    aviso.textContent = Carrito.textoListaGuardada(fecha);
     lista.parentNode.insertBefore(aviso, lista);
   }
 
   function mostrarDesdeCache(){
-    var cached = leerCache();
+    var cached = Carrito.leerCacheCatalogo();
     if (!(cached && cached.filas.length)) return false;
     lista.innerHTML = "";
     cached.filas.forEach(function(c){
       if (!(c && String(c[0] || "").trim())) return;
-      if (Carrito.esOculto(c)) return;
-      lista.appendChild(construirProducto(c));
-      finalizar(c);
+      if (Carrito.esOculto(c, cached.encabezado)) return;
+      lista.appendChild(construirProducto(c, cached.encabezado));
+      finalizar(c, cached.encabezado, true);
     });
     avisarCache(cached.fecha);
     construirFiltros();
@@ -335,16 +307,16 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   estado.textContent = "Cargando productos…";
   estado.hidden = false;
 
-  Carrito.leerHoja(HOJA_URL, function(c){
+  Carrito.leerHoja(HOJA_URL, function(c, enc){
     if (!(c[0] || "").trim()) return;
-    if (Carrito.esOculto(c)) return;
+    if (Carrito.esOculto(c, enc)) return;
     filas.push(c);
-    lista.appendChild(construirProducto(c));
-    finalizar(c);
-  }, function(){
+    lista.appendChild(construirProducto(c, enc));
+    finalizar(c, enc, false);
+  }, function(enc){
     if (filas.length > 0){
       estado.hidden = true;
-      localStorage.setItem("starlight_catalogo_v1", JSON.stringify({fecha:Date.now(), filas:filas}));
+      Carrito.guardarCacheCatalogo(filas, enc);
       construirFiltros();
       return;
     }

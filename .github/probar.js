@@ -132,5 +132,300 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
   exigir(resultado.termino && !resultado.fallo && resultado.filas.length === 1 && resultado.filas[0].length === 5, "leerHoja: rechazó columnas extra");
 
   console.log("✓ leerHoja: parseo documental, validación y emisión atómica");
+
+  // 5) Columnas por nombre: encabezado real de la hoja (14 columnas) con y
+  //    sin la columna `viene` al final (contrato v39 §2 S-R2/S-R3).
+  const REAL = "id,producto,precio,stock,categoria,articulo,capacidad,specs,titulo,texto,visible,oferta,oferta_fin,oferta_tope";
+  const encReal = REAL.split(",");
+  const encViene = encReal.concat("viene");
+  const OPC = { encabezado: ["id", "producto", "precio", "stock"] };
+
+  function leerConEncabezado(csv) {
+    const r = { filas: [], encFila: [], encFin: undefined, fallo: false };
+    global.fetch = respuesta(csv);
+    return new Promise((fin) => {
+      C.leerHoja("https://hoja", (c, enc) => { r.filas.push(c); r.encFila.push(enc); },
+        (enc) => { r.encFin = enc; fin(r); }, () => { r.fallo = true; fin(r); }, OPC);
+    });
+  }
+  const porId = (r, id) => r.filas.find((c) => c[0] === id);
+
+  exigir(C.indiceColumna(encViene, "viene") === 14, "indiceColumna: viene no está en la columna 15");
+  exigir(C.indiceColumna(encReal, "viene") === -1, "indiceColumna: encontró viene en el encabezado de 14");
+  exigir(C.indiceColumna([" ID ", "Viene "], "viene") === 1, "indiceColumna: no ignora mayúsculas ni espacios");
+  exigir(C.indiceColumna(null, "viene") === -1, "indiceColumna: sin encabezado debe dar -1");
+
+  const csvViene = [
+    REAL + ",viene",
+    "delta2,EcoFlow Delta 2,650,0,Energía,la,1024 Wh,a | b,,,,,,,sí",
+    "river2,EcoFlow River 2 Pro,500,0,Energía,la,768 Wh,,,,,,,,",
+    "sumry,Inversor Sumry,380,2,Energía,el,4000 W,,,,,Rebaja,,,sí",
+    "delta3,EcoFlow Delta 3,700,9,Energía,la,,,,,,,,,sí",
+    "oculto,Producto oculto,100,0,Energía,el,,,,,no,,,,sí"
+  ].join("\n");
+  let hoja = await leerConEncabezado(csvViene);
+  exigir(!hoja.fallo && hoja.filas.length === 5, `leerHoja con viene: ${JSON.stringify(hoja)}`);
+  exigir(hoja.encFila.every((e) => JSON.stringify(e) === JSON.stringify(encViene)), "leerHoja: porFila no recibió el encabezado");
+  exigir(JSON.stringify(hoja.encFin) === JSON.stringify(encViene), "leerHoja: alTerminar no recibió el encabezado");
+
+  const insigniaEs = (fila, enc, cache, texto, clase, msg) => {
+    const got = C.insignia(fila, enc, cache);
+    exigir(got && got.texto === texto && got.clase === clase, `${msg}: ${JSON.stringify(got)}`);
+  };
+  insigniaEs(porId(hoja, "delta2"), hoja.encFin, false, "Agotado · vienen en camino", "viene", "stock 0 + viene=sí");
+  insigniaEs(porId(hoja, "river2"), hoja.encFin, false, "Agotado por el momento", "agotado", "stock 0 + viene vacío");
+  insigniaEs(porId(hoja, "sumry"), hoja.encFin, false, "¡Quedan solo 2!", "pocas", "stock 2 + viene=sí");
+  insigniaEs(porId(hoja, "delta3"), hoja.encFin, false, "Disponible", "disponible", "stock 9 + viene=sí");
+  exigir(C.esOculto(porId(hoja, "oculto"), hoja.encFin), "un producto oculto con viene=sí sigue oculto");
+  exigir(!C.esOculto(porId(hoja, "delta2"), hoja.encFin), "delta2 no debe estar oculto");
+  exigir(C.celda(porId(hoja, "sumry"), hoja.encFin, "oferta", 11) === "Rebaja", "oferta por nombre");
+  exigir(C.celda(porId(hoja, "delta2"), hoja.encFin, "capacidad", 6) === "1024 Wh", "capacidad por nombre");
+  exigir(C.estadoStock(NaN, true, false) === null, "estadoStock: stock ilegible no decide la insignia");
+  insigniaEs(["x", "X", "1", "-2"].concat(Array(10).fill(""), "sí"), encViene, false, "Agotado · vienen en camino", "viene", "stock negativo + viene");
+
+  // CSV viejo, sin la columna viene: exactamente como hoy.
+  const csvViejo = [REAL,
+    "delta2,EcoFlow Delta 2,650,0,Energía,la,1024 Wh,,,,,Oferta vieja,,",
+    "oculto,Producto oculto,100,3,Energía,el,,,,,no,,,"
+  ].join("\n");
+  hoja = await leerConEncabezado(csvViejo);
+  exigir(!hoja.fallo && hoja.filas.length === 2 && hoja.encFin.length === 14, `leerHoja con CSV viejo: ${JSON.stringify(hoja)}`);
+  exigir(!C.viene(porId(hoja, "delta2"), hoja.encFin), "CSV viejo: viene debe ser no");
+  insigniaEs(porId(hoja, "delta2"), hoja.encFin, false, "Agotado por el momento", "agotado", "CSV viejo, stock 0");
+  exigir(C.celda(porId(hoja, "delta2"), hoja.encFin, "oferta", 11) === "Oferta vieja", "CSV viejo: oferta");
+  exigir(C.esOculto(porId(hoja, "oculto"), hoja.encFin) && C.esOculto(porId(hoja, "oculto")), "CSV viejo: oculto por nombre y por posición");
+
+  // Si `viene` cayera antes de K, leer `visible` por nombre sigue ocultando
+  // lo oculto (por posición lo publicaría: riesgo C17 del contrato).
+  const encMal = encReal.slice(0, 4).concat("viene", encReal.slice(4));
+  const filaMal = ["oculto", "Oculto", "100", "0", "sí", "Energía", "el", "", "", "", "", "no", "", "", ""];
+  exigir(C.esOculto(filaMal, encMal), "visible por nombre con viene fuera de lugar");
+  exigir(C.viene(filaMal, encMal), "viene por nombre fuera de lugar");
+
+  const valoresViene = [["sí", true], ["SÍ", true], [" si ", true], ["sí", true], ["Sí ", true],
+    ["no", false], ["", false], ["x", false], [undefined, false]];
+  for (const [v, esperado] of valoresViene) {
+    const fila = ["delta2", "D", "1", "0"].concat(Array(10).fill(""), v);
+    exigir(C.viene(fila, encViene) === esperado, `viene(${JSON.stringify(v)}) debía ser ${esperado}`);
+  }
+  exigir(C.celda(["a"], null, "viene") === "" && C.celda(["a", "b"], null, "producto", 1) === "b", "celda: sin encabezado usa la posición o vacío");
+  console.log("✓ columnas por nombre: encabezado real con y sin viene, insignia y ocultos");
+
+  // 6) Caché del catálogo {fecha, encabezado, filas} (D44)
+  const memoria = {};
+  const almacen = {
+    getItem: (k) => (k in memoria ? memoria[k] : null),
+    setItem: (k, v) => { memoria[k] = String(v); },
+    removeItem: (k) => { delete memoria[k]; }
+  };
+  global.localStorage = almacen;
+  const filasCache = [["delta2", "EcoFlow Delta 2", "650", "0"].concat(Array(10).fill(""), "sí")];
+  C.guardarCacheCatalogo(filasCache, encViene);
+  const crudo = JSON.parse(memoria.starlight_catalogo_v1);
+  exigir(typeof crudo.fecha === "number" && JSON.stringify(crudo.encabezado) === JSON.stringify(encViene) && crudo.filas.length === 1,
+    `guardarCacheCatalogo: ${memoria.starlight_catalogo_v1}`);
+  let cache = C.leerCacheCatalogo();
+  exigir(cache && JSON.stringify(cache.encabezado) === JSON.stringify(encViene), "leerCacheCatalogo: perdió el encabezado");
+  insigniaEs(cache.filas[0], cache.encabezado, true, "Agotado por el momento", "agotado", "desde la caché nunca dice vienen en camino");
+
+  memoria.starlight_catalogo_v1 = JSON.stringify({ fecha: 123, filas: [["delta2", "D", "650", "0", "", "", "", "", "", "", "no"]] });
+  cache = C.leerCacheCatalogo();
+  exigir(cache && cache.encabezado === null && cache.fecha === 123 && cache.filas.length === 1, `caché sin encabezado: ${JSON.stringify(cache)}`);
+  exigir(C.esOculto(cache.filas[0], cache.encabezado), "caché sin encabezado: oculto por posición");
+  insigniaEs(cache.filas[0], cache.encabezado, true, "Agotado por el momento", "agotado", "caché sin encabezado");
+
+  memoria.starlight_catalogo_v1 = JSON.stringify([["delta2", "D", "650", "5"]]);
+  cache = C.leerCacheCatalogo();
+  exigir(cache && cache.fecha === null && cache.encabezado === null && cache.filas.length === 1, "caché con formato de arreglo");
+  memoria.starlight_catalogo_v1 = "{roto";
+  exigir(C.leerCacheCatalogo() === null, "caché corrupta debe dar null");
+  delete memoria.starlight_catalogo_v1;
+  exigir(C.leerCacheCatalogo() === null, "sin caché debe dar null");
+
+  global.localStorage = { getItem: () => { throw new Error("bloqueado"); }, setItem: () => { throw new Error("lleno"); }, removeItem: () => { throw new Error("bloqueado"); } };
+  exigir(C.leerCacheCatalogo() === null, "localStorage bloqueado: leer");
+  C.guardarCacheCatalogo(filasCache, encViene);
+  global.localStorage = almacen;
+
+  const H = 3600000, ahora = 1760000000000;
+  const casosLista = [
+    [ahora - 5 * H, "Lista guardada de hace 5 horas; puede haber cambiado."],
+    [ahora - 5 * H - 59 * 60000, "Lista guardada de hace 5 horas; puede haber cambiado."],
+    [ahora - 30 * 60000, "Lista guardada de hace menos de 1 hora; puede haber cambiado."],
+    [ahora - H, "Lista guardada de hace 1 hora; puede haber cambiado."],
+    [ahora - 47 * H, "Lista guardada de hace 47 horas; puede haber cambiado."],
+    [ahora - 72 * H, "Lista guardada de hace 3 días; puede haber cambiado."],
+    [ahora + H, "Lista guardada de hace menos de 1 hora; puede haber cambiado."],
+    [null, "Lista guardada; puede haber cambiado."]
+  ];
+  for (const [fecha, esperado] of casosLista) {
+    const got = C.textoListaGuardada(fecha, ahora);
+    exigir(got === esperado, `textoListaGuardada(${fecha}) = ${got}`);
+  }
+  console.log(`✓ caché del catálogo: con y sin encabezado, nunca promete desde la caché, ${casosLista.length} avisos de antigüedad`);
+
+  // 7) Pedido: lo agotado no entra (D42) y cada ítem lleva su precio (§1.3)
+  const carrito = [
+    { id: "delta2", nombre: "EcoFlow Delta 2", articulo: "la", precio: 650, cantidad: 1 },
+    { id: "river2", nombre: "EcoFlow River 2 Pro", articulo: "la", precio: 500, cantidad: 2 },
+    { id: "sumry", nombre: "Inversor Sumry", articulo: "el", precio: 380, cantidad: 1 },
+    { id: "mc4", nombre: "Conectores MC4", articulo: "los", precio: null, cantidad: 3 },
+    { id: "luzsolar", nombre: "Lámpara solar", articulo: "la", precio: 25, cantidad: 1 }
+  ];
+  const info = { delta2: { stock: 0, viene: true }, river2: { stock: 0, viene: false }, sumry: { stock: 5, viene: false }, mc4: { stock: null, viene: false } };
+  const partes = C.partirPedido(carrito, info);
+  exigir(partes.entran.map((i) => i.id).join() === "sumry,mc4,luzsolar", `partirPedido entran: ${partes.entran.map((i) => i.id)}`);
+  exigir(JSON.stringify(partes.fuera.map((i) => [i.id, i.viene])) === JSON.stringify([["delta2", true], ["river2", false]]), `partirPedido fuera: ${JSON.stringify(partes.fuera)}`);
+  const suma = C.sumar(partes.entran);
+  exigir(suma.sub === 405 && suma.hayWA === true, `sumar sin agotados: ${JSON.stringify(suma)}`);
+  const enviados = C.itemsParaEnviar(partes.entran);
+  exigir(JSON.stringify(enviados) === JSON.stringify([
+    { id: "sumry", nombre: "Inversor Sumry", cantidad: 1, precio: 380 },
+    { id: "mc4", nombre: "Conectores MC4", cantidad: 3, precio: null },
+    { id: "luzsolar", nombre: "Lámpara solar", cantidad: 1, precio: 25 }
+  ]), `itemsParaEnviar: ${JSON.stringify(enviados)}`);
+  exigir(enviados.every((it) => "precio" in it), "itemsParaEnviar: falta la clave precio");
+  exigir(C.itemsParaEnviar([{ id: "mc4", nombre: "MC4", cantidad: 1, precio: 1.5 }, { id: "a", nombre: "A", cantidad: 1, precio: 99.999 }]).map((i) => i.precio).join() === "1.5,100", "itemsParaEnviar: 2 decimales");
+  exigir(C.partirPedido(carrito, {}).entran.length === 5, "sin hoja, todo entra en el pedido");
+  exigir(C.partirPedido(carrito, { delta2: { stock: -1 } }).fuera.length === 1, "stock negativo no entra");
+  exigir(C.TEXTOS.fueraViene === "Agotado · vienen en camino. No entra en este pedido: le avisamos por WhatsApp cuando lleguen.", "texto D42 (viene)");
+  exigir(C.TEXTOS.fuera === "Agotado por el momento. No entra en este pedido.", "texto D42 (no viene)");
+  console.log("✓ pedido: lo agotado queda fuera del mensaje y del total; cada ítem manda su precio");
+
+  // 8) "Avisarme" (D43), con un DOM mínimo de mentira
+  class Nodo {
+    constructor(tag) {
+      this.tagName = String(tag).toUpperCase(); this.children = []; this._texto = "";
+      this.className = ""; this.atributos = {}; this.oyentes = {};
+      this.disabled = false; this.hidden = false; this.value = ""; this.type = ""; this.style = {}; this.enfocado = false;
+      const yo = this;
+      this.classList = {
+        add: (c) => { if (!yo.classList.contains(c)) yo.className = (yo.className + " " + c).trim(); },
+        remove: (c) => { yo.className = yo.className.split(/\s+/).filter((x) => x && x !== c).join(" "); },
+        contains: (c) => yo.className.split(/\s+/).includes(c)
+      };
+    }
+    get textContent() { return this._texto + this.children.map((c) => c.textContent).join(""); }
+    set textContent(v) { this.children = []; this._texto = String(v); }
+    appendChild(n) { this.children.push(n); return n; }
+    setAttribute(k, v) { this.atributos[k] = String(v); }
+    addEventListener(t, f) { (this.oyentes[t] = this.oyentes[t] || []).push(f); }
+    click() { (this.oyentes.click || []).forEach((f) => f({})); }
+    focus() { this.enfocado = true; }
+  }
+  global.document.createElement = (t) => new Nodo(t);
+  const buscar = (raiz, pred, acc = []) => { for (const h of raiz.children) { if (pred(h)) acc.push(h); buscar(h, pred, acc); } return acc; };
+  const clase = (raiz, c) => buscar(raiz, (n) => n.classList.contains(c))[0];
+  const etiqueta = (raiz, t) => buscar(raiz, (n) => n.tagName === t)[0];
+  const esperar = () => new Promise((r) => setImmediate(r));
+  const URL_AVISO = "https://exec";
+
+  function diferido() { let ok, mal; const p = new Promise((a, b) => { ok = a; mal = b; }); return { p, ok, mal }; }
+  let llamadas = [];
+  function fetchFalso(resultado) {
+    return (url, op) => { llamadas.push({ url, op }); return resultado(); };
+  }
+
+  // Formulario de un agotado que viene
+  for (const k of Object.keys(memoria)) delete memoria[k];
+  let cont = new Nodo("div");
+  C.pintarAviso(cont, { id: "delta2", nombre: "EcoFlow Delta 2", viene: true, url: URL_AVISO });
+  exigir(clase(cont, "aviso-txt").textContent === "Vienen en camino. Deje su número de WhatsApp y le avisamos cuando lleguen:", "Avisarme: invitación cuando viene");
+  let boton = clase(cont, "btn-aviso"), campo = etiqueta(cont, "INPUT"), error = clase(cont, "aviso-error");
+  exigir(boton.textContent === "Avisarme" && !boton.disabled && campo.type === "tel" && error.hidden, "Avisarme: estado inicial");
+
+  cont = new Nodo("div");
+  C.pintarAviso(cont, { id: "river2", nombre: "River", viene: false, url: URL_AVISO });
+  exigir(clase(cont, "aviso-txt").textContent === "Deje su número de WhatsApp y le escribimos en cuanto llegue:", "Avisarme: invitación de siempre");
+  cont = new Nodo("div");
+  C.pintarAviso(cont, { id: "river2", nombre: "River", viene: true, url: URL_AVISO, texto: false });
+  exigir(!clase(cont, "aviso-txt") && clase(cont, "btn-aviso"), "Avisarme: sin invitación en el pedido");
+
+  // Número corto: no se envía nada
+  cont = new Nodo("div");
+  C.pintarAviso(cont, { id: "delta2", nombre: "EcoFlow Delta 2", viene: true, url: URL_AVISO });
+  boton = clase(cont, "btn-aviso"); campo = etiqueta(cont, "INPUT"); error = clase(cont, "aviso-error");
+  llamadas = [];
+  global.fetch = fetchFalso(() => Promise.resolve({}));
+  campo.value = "5355";
+  boton.click();
+  exigir(llamadas.length === 0 && campo.classList.contains("error-campo") && campo.enfocado, "Avisarme: un número corto no se envía");
+
+  // Envío que sale: "Anotando…" mientras espera, después la confirmación
+  let espera = diferido();
+  global.fetch = fetchFalso(() => espera.p);
+  campo.value = "+53 5512 3476";
+  boton.click();
+  exigir(boton.disabled && boton.textContent === "Anotando…" && !campo.classList.contains("error-campo"), "Avisarme: Anotando… desactivado");
+  boton.click();
+  exigir(llamadas.length === 1, "Avisarme: un segundo toque mientras anota no envía otra vez");
+  const cuerpo = JSON.parse(llamadas[0].op.body);
+  exigir(llamadas[0].url === URL_AVISO && llamadas[0].op.mode === "no-cors" && llamadas[0].op.method === "POST", "Avisarme: petición no-cors POST");
+  exigir(JSON.stringify(cuerpo) === JSON.stringify({ accion: "aviso", id: "delta2", producto: "EcoFlow Delta 2", telefono: "+5355123476" }), `Avisarme: cuerpo ${llamadas[0].op.body}`);
+  exigir(memoria.starlight_aviso_delta2 === undefined, "Avisarme: no recuerda antes de saber que salió");
+  espera.ok({ type: "opaque" });
+  await esperar();
+  exigir(cont.textContent === "✓ Anotado. Le avisamos por WhatsApp cuando lleguen." && clase(cont, "aviso-ok"), `Avisarme: confirmación ${cont.textContent}`);
+  exigir(C.avisoGuardado("delta2") === "76", `Avisarme: recordado ${memoria.starlight_aviso_delta2}`);
+
+  // Próxima visita: ya está anotado, sin formulario
+  cont = new Nodo("div");
+  C.pintarAviso(cont, { id: "delta2", nombre: "EcoFlow Delta 2", viene: true, url: URL_AVISO });
+  exigir(cont.textContent === "✓ Ya está anotado con el número terminado en 76. Le avisamos cuando lleguen." && !etiqueta(cont, "INPUT"), `Avisarme: próxima visita ${cont.textContent}`);
+  C.olvidarAviso("delta2");
+  exigir(C.avisoGuardado("delta2") === null, "olvidarAviso: debía borrar el aviso");
+
+  // Falla de red: texto rojo, botón de vuelta y nada recordado; reintento sale
+  cont = new Nodo("div");
+  C.pintarAviso(cont, { id: "river2", nombre: "River", viene: false, url: URL_AVISO });
+  boton = clase(cont, "btn-aviso"); campo = etiqueta(cont, "INPUT"); error = clase(cont, "aviso-error");
+  global.fetch = fetchFalso(() => Promise.reject(new TypeError("Failed to fetch")));
+  campo.value = "53551234";
+  boton.click();
+  await esperar();
+  exigir(!error.hidden && error.textContent === "No se pudo anotar. Revise su conexión y toque «Avisarme» otra vez.", "Avisarme: texto de la falla");
+  exigir(!boton.disabled && boton.textContent === "Avisarme" && C.avisoGuardado("river2") === null, "Avisarme: tras la falla se puede reintentar y no se recuerda");
+  global.fetch = fetchFalso(() => Promise.resolve({}));
+  boton.click();
+  exigir(error.hidden, "Avisarme: al reintentar se esconde el error");
+  await esperar();
+  exigir(cont.textContent === "✓ Anotado. Le avisamos por WhatsApp cuando lleguen." && C.avisoGuardado("river2") === "34", "Avisarme: el reintento anota");
+
+  // fetch que lanza al llamarlo, o sin URL: también es falla
+  global.fetch = () => { throw new Error("sin fetch"); };
+  exigir(await C.enviarAviso(URL_AVISO, { id: "x" }) === false, "enviarAviso: un fetch que lanza es falla");
+  exigir(await C.enviarAviso("", { id: "x" }) === false, "enviarAviso: sin URL es falla");
+
+  // localStorage bloqueado: el formulario sale y la confirmación también
+  global.localStorage = { getItem: () => { throw new Error("bloqueado"); }, setItem: () => { throw new Error("bloqueado"); }, removeItem: () => { throw new Error("bloqueado"); } };
+  cont = new Nodo("div");
+  C.pintarAviso(cont, { id: "sumry", nombre: "Sumry", viene: true, url: URL_AVISO });
+  boton = clase(cont, "btn-aviso"); campo = etiqueta(cont, "INPUT");
+  global.fetch = fetchFalso(() => Promise.resolve({}));
+  campo.value = "53551234";
+  boton.click();
+  await esperar();
+  exigir(cont.textContent === "✓ Anotado. Le avisamos por WhatsApp cuando lleguen.", "Avisarme: sin localStorage confirma igual");
+  C.olvidarAviso("sumry");
+  global.localStorage = almacen;
+  memoria.starlight_aviso_sumry = "{roto";
+  exigir(C.avisoGuardado("sumry") === null, "avisoGuardado: un valor roto muestra el formulario");
+  console.log("✓ Avisarme: invitación, Anotando…, confirmación, falla de red, recuerdo por producto");
+
+  // 9) Cableado de las páginas con las ayudas de carrito.js
+  const leer = (f) => fs.readFileSync(path.join(RAIZ, f), "utf8");
+  const pedidoHtml = leer("pedido.html"), catalogoHtml = leer("catalogo.html"), indexHtml = leer("index.html");
+  exigir(/items:\s*Carrito\.itemsParaEnviar\(items\)/.test(pedidoHtml) && /var items=partir\(\)\.entran;/.test(pedidoHtml), "pedido.html: el envío no usa lo que entra");
+  exigir(/Carrito\.sumar\(partir\(\)\.entran\)/.test(pedidoHtml), "pedido.html: el total no usa lo que entra");
+  exigir(/viene:Carrito\.viene\(c, enc\)/.test(pedidoHtml), "pedido.html: no lee viene por nombre");
+  exigir(/Carrito\.guardarCacheCatalogo\(filas, enc\)/.test(catalogoHtml) && /finalizar\(c, cached\.encabezado, true\)/.test(catalogoHtml), "catalogo.html: la caché no guarda o no usa el encabezado");
+  exigir(/finalizar\(c, enc, false\)/.test(catalogoHtml) && /Carrito\.pintarAviso\(/.test(catalogoHtml), "catalogo.html: insignia o Avisarme sin cablear");
+  exigir(indexHtml.includes("Le avisamos por WhatsApp cuando lleguen."), "index.html: la pregunta frecuente no dice la frase de D30");
+  const versiones = (re) => ["index.html", "catalogo.html", "pedido.html"].map((f) => (leer(f).match(re) || [])[1]);
+  const vCarrito = versiones(/carrito\.js\?v=(\d+)/), vEstilos = versiones(/estilos\.css\?v=(\d+)/).concat((leer("404.html").match(/estilos\.css\?v=(\d+)/) || [])[1]);
+  exigir(new Set(vCarrito).size === 1 && vCarrito[0], `versiones de carrito.js distintas: ${vCarrito}`);
+  exigir(new Set(vEstilos).size === 1 && vEstilos[0], `versiones de estilos.css distintas: ${vEstilos}`);
+  console.log(`✓ páginas cableadas (carrito.js?v=${vCarrito[0]}, estilos.css?v=${vEstilos[0]})`);
+
   console.log("TODO OK");
 })();

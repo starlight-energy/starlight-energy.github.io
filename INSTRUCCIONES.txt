@@ -40,6 +40,10 @@ PASO 3 — EL INVENTARIO EN GOOGLE SHEETS (3 minutos, una sola vez)
        "Precio del día por WhatsApp".
      - stock 0 = aparece "Agotado por el momento" y una casilla
        para que el cliente deje su WhatsApp (cae en "Avisos").
+       Si hay mercancía de ese producto en camino a Cuba (columna
+       "viene" = sí; la llena la tienda sola, no se toca), dice
+       "Agotado · vienen en camino". Un producto agotado no entra
+       en el pedido: la página se lo dice al cliente.
      - stock 1 a 3 = aparece "¡Quedan solo X!".
   4. Menú Archivo → Compartir → Publicar en la web.
      Elige la hoja, formato "Valores separados por comas (.csv)",
