@@ -192,7 +192,8 @@
     anotado: "✓ Anotado. Le avisamos por WhatsApp cuando lleguen.",
     fallo: "No se pudo anotar. Revise su conexión y toque «Avisarme» otra vez.",
     fueraViene: "Agotado · vienen en camino. No entra en este pedido: le avisamos por WhatsApp cuando lleguen.",
-    fuera: "Agotado por el momento. No entra en este pedido."
+    fuera: "Agotado por el momento. No entra en este pedido.",
+    otroNumero: "¿Otro número? Anotar de nuevo"
   };
 
   function textoYaAnotado(fin) {
@@ -258,13 +259,28 @@
   // --- "Avisarme" (D43) -----------------------------------------------------
   function claveAviso(id) { return "starlight_aviso_" + id; }
 
+  // Lo anotado se recuerda DIAS_AVISO días. Pasado eso (o sin fecha válida) el
+  // formulario vuelve: la fila Pendiente pudo cumplirse (Avisado) sin que el
+  // cliente abriera el sitio con stock, o la tienda pudo no anotarla (con
+  // no-cors una negativa parece un éxito), y "Ya está anotado" sin fila en la
+  // tienda es una promesa falsa. Anotarse otra vez no duplica: la tienda (D43)
+  // no agrega otra fila Pendiente con el mismo producto y el mismo teléfono.
+  var DIAS_AVISO = 30;
+
   // Devuelve los 2 últimos dígitos del número anotado para ese producto, o null.
-  function avisoGuardado(id) {
+  // `ahora` es opcional (pruebas).
+  function avisoGuardado(id, ahora) {
     try {
-      var d = JSON.parse(localStorage.getItem(claveAviso(id)));
+      var guardado = localStorage.getItem(claveAviso(id));
+      if (guardado == null) return null;
+      var d = JSON.parse(guardado);
       var fin = d && typeof d === "object" ? String(d.fin == null ? "" : d.fin) : "";
-      return /^\d{2}$/.test(fin) ? fin : null;
-    } catch (e) { return null; }
+      if (typeof ahora !== "number") ahora = Date.now();
+      var edad = (d && typeof d.fecha === "number" && isFinite(d.fecha)) ? ahora - d.fecha : NaN;
+      if (/^\d{2}$/.test(fin) && edad >= 0 && edad < DIAS_AVISO * 86400000) return fin;
+    } catch (e) {}
+    olvidarAviso(id);
+    return null;
   }
 
   function recordarAviso(id, telefono) {
@@ -279,15 +295,27 @@
   }
 
   // Con mode "no-cors" la respuesta es opaca: solo se detecta la falla de red.
+  // En los datos móviles de Cuba la conexión a menudo se cuelga en vez de
+  // fallar, y fetch puede quedar minutos sin contestar: pasados SEGUNDOS_AVISO
+  // se da por fallido para que el cliente vea el texto rojo y pueda reintentar.
+  // La petición no se cancela (keepalive): si llega tarde, la tienda (D43)
+  // descarta la fila repetida.
+  var SEGUNDOS_AVISO = 25;
+
   function enviarAviso(url, datos) {
     if (!url) return Promise.resolve(false);
+    var envio;
     try {
-      return fetch(url, {
+      envio = fetch(url, {
         method: "POST", mode: "no-cors", keepalive: true,
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ accion: "aviso", id: datos.id, producto: datos.producto, telefono: datos.telefono })
       }).then(function () { return true; }, function () { return false; });
     } catch (e) { return Promise.resolve(false); }
+    return new Promise(function (listo) {
+      var reloj = setTimeout(function () { listo(false); }, SEGUNDOS_AVISO * 1000);
+      envio.then(function (ok) { clearTimeout(reloj); listo(ok); });
+    });
   }
 
   function nuevo(tag, clase, texto) {
@@ -297,21 +325,36 @@
     return el;
   }
 
-  // Pinta el formulario "Avisarme" dentro de `cont`.
-  // op: {id, nombre, viene, url, texto (false = sin la frase de invitación)}
+  // Pinta "Avisarme" dentro de `cont`: el formulario, o "Ya está anotado" si
+  // este teléfono lo anotó hace menos de DIAS_AVISO días.
+  // op: {id, nombre, viene, url}
   function pintarAviso(cont, op) {
     var caja = nuevo("div", "aviso-tel");
     cont.appendChild(caja);
-
     var fin = avisoGuardado(op.id);
-    if (fin) {
-      caja.appendChild(nuevo("span", "aviso-ok", textoYaAnotado(fin)));
-      return caja;
-    }
+    if (fin) pintarYaAnotado(caja, op, fin);
+    else pintarFormularioAviso(caja, op);
+    return caja;
+  }
 
-    if (op.texto !== false) {
-      caja.appendChild(nuevo("span", "aviso-txt", op.viene ? TEXTOS.invitacionViene : TEXTOS.invitacion));
-    }
+  // Debajo, "¿Otro número? Anotar de nuevo" olvida lo recordado y devuelve el
+  // formulario en la misma caja: el cliente siempre puede corregir un número
+  // mal escrito o anotarse otra vez.
+  function pintarYaAnotado(caja, op, fin) {
+    caja.appendChild(nuevo("span", "aviso-ok", textoYaAnotado(fin)));
+    var otro = nuevo("button", "aviso-otro", TEXTOS.otroNumero);
+    otro.type = "button";
+    otro.addEventListener("click", function () {
+      olvidarAviso(op.id);
+      caja.textContent = "";
+      pintarFormularioAviso(caja, op).focus();
+    });
+    caja.appendChild(otro);
+  }
+
+  // Devuelve el campo del teléfono.
+  function pintarFormularioAviso(caja, op) {
+    caja.appendChild(nuevo("span", "aviso-txt", op.viene ? TEXTOS.invitacionViene : TEXTOS.invitacion));
     var fila = nuevo("div", "aviso-fila");
     var inp = nuevo("input");
     inp.type = "tel";
@@ -351,7 +394,7 @@
         }
       });
     });
-    return caja;
+    return inp;
   }
 
   // --- Pedido (D42 y contrato v39 §1.3) -------------------------------------
@@ -413,6 +456,7 @@
     textoListaGuardada: textoListaGuardada,
     avisoGuardado: avisoGuardado, recordarAviso: recordarAviso, olvidarAviso: olvidarAviso,
     enviarAviso: enviarAviso, pintarAviso: pintarAviso,
+    DIAS_AVISO: DIAS_AVISO, SEGUNDOS_AVISO: SEGUNDOS_AVISO,
     partirPedido: partirPedido, sumar: sumar, itemsParaEnviar: itemsParaEnviar
   };
 

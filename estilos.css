@@ -188,6 +188,7 @@ h2.titulo{font-size:23px;font-weight:800;color:var(--azul);letter-spacing:-.01em
 .aviso-ok{display:block;font-size:14.5px;font-weight:700;color:var(--verde-hoja);padding:8px 0}
 .aviso-error{display:block;font-size:13.5px;font-weight:700;color:var(--rojo);margin-top:8px}
 .aviso-error[hidden]{display:none}
+.aviso-otro{background:none;border:0;color:var(--azul);font-size:13.5px;font-weight:700;text-decoration:underline;cursor:pointer;padding:8px 0;font-family:inherit}
 
 .nota-precio-cab{margin-top:10px;font-size:13.5px;color:var(--gris);font-weight:600}
 .acciones{margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}

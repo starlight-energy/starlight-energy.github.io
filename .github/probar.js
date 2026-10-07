@@ -337,9 +337,6 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
   cont = new Nodo("div");
   C.pintarAviso(cont, { id: "river2", nombre: "River", viene: false, url: URL_AVISO });
   exigir(clase(cont, "aviso-txt").textContent === "Deje su número de WhatsApp y le escribimos en cuanto llegue:", "Avisarme: invitación de siempre");
-  cont = new Nodo("div");
-  C.pintarAviso(cont, { id: "river2", nombre: "River", viene: true, url: URL_AVISO, texto: false });
-  exigir(!clase(cont, "aviso-txt") && clase(cont, "btn-aviso"), "Avisarme: sin invitación en el pedido");
 
   // Número corto: no se envía nada
   cont = new Nodo("div");
@@ -368,12 +365,61 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
   exigir(cont.textContent === "✓ Anotado. Le avisamos por WhatsApp cuando lleguen." && clase(cont, "aviso-ok"), `Avisarme: confirmación ${cont.textContent}`);
   exigir(C.avisoGuardado("delta2") === "76", `Avisarme: recordado ${memoria.starlight_aviso_delta2}`);
 
-  // Próxima visita: ya está anotado, sin formulario
+  // Próxima visita: ya está anotado, sin formulario, con la salida "¿Otro número?"
   cont = new Nodo("div");
   C.pintarAviso(cont, { id: "delta2", nombre: "EcoFlow Delta 2", viene: true, url: URL_AVISO });
-  exigir(cont.textContent === "✓ Ya está anotado con el número terminado en 76. Le avisamos cuando lleguen." && !etiqueta(cont, "INPUT"), `Avisarme: próxima visita ${cont.textContent}`);
+  exigir(clase(cont, "aviso-ok").textContent === "✓ Ya está anotado con el número terminado en 76. Le avisamos cuando lleguen." && !etiqueta(cont, "INPUT"), `Avisarme: próxima visita ${cont.textContent}`);
+  let otro = clase(cont, "aviso-otro");
+  exigir(otro && otro.tagName === "BUTTON" && otro.type === "button" && otro.textContent === "¿Otro número? Anotar de nuevo", `Avisarme: falta «¿Otro número?» ${cont.textContent}`);
   C.olvidarAviso("delta2");
   exigir(C.avisoGuardado("delta2") === null, "olvidarAviso: debía borrar el aviso");
+
+  // "¿Otro número?": olvida lo recordado y devuelve el formulario en la MISMA
+  // caja (lo que la página puso después, como «Compartir» o «Quitar», no se mueve)
+  C.recordarAviso("delta2", "+53 5512 3476");
+  cont = new Nodo("div");
+  const cajaAviso = C.pintarAviso(cont, { id: "delta2", nombre: "EcoFlow Delta 2", viene: true, url: URL_AVISO });
+  const despues = cont.appendChild(new Nodo("button"));
+  clase(cont, "aviso-otro").click();
+  exigir(memoria.starlight_aviso_delta2 === undefined && C.avisoGuardado("delta2") === null, "¿Otro número?: debía olvidar el aviso");
+  exigir(cont.children.length === 2 && cont.children[0] === cajaAviso && cont.children[1] === despues, "¿Otro número?: el formulario debe volver en la misma caja");
+  campo = etiqueta(cont, "INPUT"); boton = clase(cont, "btn-aviso");
+  exigir(campo && campo.enfocado && boton && !clase(cont, "aviso-ok") && !clase(cont, "aviso-otro"), "¿Otro número?: formulario de vuelta con el campo enfocado");
+  exigir(clase(cont, "aviso-txt").textContent === "Vienen en camino. Deje su número de WhatsApp y le avisamos cuando lleguen:", "¿Otro número?: invitación de vuelta");
+  global.fetch = fetchFalso(() => Promise.resolve({}));
+  llamadas = [];
+  campo.value = "53 5599 8811";
+  boton.click();
+  await esperar();
+  exigir(llamadas.length === 1 && JSON.parse(llamadas[0].op.body).telefono === "5355998811", "¿Otro número?: manda el número nuevo");
+  exigir(C.avisoGuardado("delta2") === "11" && clase(cont, "aviso-ok").textContent === "✓ Anotado. Le avisamos por WhatsApp cuando lleguen.", "¿Otro número?: recuerda el número nuevo");
+
+  // Lo anotado se recuerda DIAS_AVISO días; después vuelve el formulario
+  const DIA = 86400000, hoy = Date.now();
+  exigir(C.DIAS_AVISO === 30, `DIAS_AVISO: ${C.DIAS_AVISO}`);
+  memoria.starlight_aviso_delta2 = JSON.stringify({ fin: "76", fecha: hoy - 29 * DIA });
+  exigir(C.avisoGuardado("delta2", hoy) === "76", "avisoGuardado: a los 29 días sigue anotado");
+  exigir(C.avisoGuardado("delta2", hoy + DIA - 1) === "76", "avisoGuardado: hasta el último instante del día 30");
+  exigir(C.avisoGuardado("delta2", hoy + DIA) === null && memoria.starlight_aviso_delta2 === undefined, "avisoGuardado: a los 30 días se olvida y borra la clave");
+  memoria.starlight_aviso_delta2 = JSON.stringify({ fin: "76", fecha: hoy - 45 * DIA });
+  cont = new Nodo("div");
+  C.pintarAviso(cont, { id: "delta2", nombre: "EcoFlow Delta 2", viene: true, url: URL_AVISO });
+  exigir(etiqueta(cont, "INPUT") && clase(cont, "btn-aviso") && !clase(cont, "aviso-ok") && memoria.starlight_aviso_delta2 === undefined,
+    `Avisarme: un aviso de hace 45 días muestra el formulario ${cont.textContent}`);
+  for (const [valor, msg] of [
+    [{ fin: "76" }, "sin fecha"],
+    [{ fin: "76", fecha: "2026-10-01" }, "fecha de texto"],
+    [{ fin: "76", fecha: hoy + 2 * DIA }, "fecha en el futuro (reloj cambiado)"],
+    [{ fin: "7", fecha: hoy }, "fin de un dígito"],
+    ["76", "valor que no es objeto"],
+    [null, "null"]
+  ]) {
+    memoria.starlight_aviso_delta2 = JSON.stringify(valor);
+    exigir(C.avisoGuardado("delta2", hoy) === null && memoria.starlight_aviso_delta2 === undefined, `avisoGuardado: ${msg} debía olvidarse`);
+  }
+  C.recordarAviso("delta2", "5355123476");
+  exigir(C.avisoGuardado("delta2") === "76", "recordarAviso + avisoGuardado: recién anotado");
+  C.olvidarAviso("delta2");
 
   // Falla de red: texto rojo, botón de vuelta y nada recordado; reintento sale
   cont = new Nodo("div");
@@ -390,6 +436,48 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
   exigir(error.hidden, "Avisarme: al reintentar se esconde el error");
   await esperar();
   exigir(cont.textContent === "✓ Anotado. Le avisamos por WhatsApp cuando lleguen." && C.avisoGuardado("river2") === "34", "Avisarme: el reintento anota");
+
+  // Conexión colgada (datos móviles de Cuba): pasados SEGUNDOS_AVISO se da por
+  // fallida, el cliente ve el texto rojo y puede reintentar. Relojes de mentira.
+  C.olvidarAviso("river2");
+  const relojReal = { set: global.setTimeout, clear: global.clearTimeout };
+  let relojes = [], limpiados = [];
+  global.setTimeout = (f, ms) => { relojes.push({ f, ms }); return relojes.length; };
+  global.clearTimeout = (n) => { limpiados.push(n); };
+  exigir(C.SEGUNDOS_AVISO >= 20 && C.SEGUNDOS_AVISO <= 25, `SEGUNDOS_AVISO: ${C.SEGUNDOS_AVISO}`);
+
+  cont = new Nodo("div");
+  C.pintarAviso(cont, { id: "river2", nombre: "River", viene: false, url: URL_AVISO });
+  boton = clase(cont, "btn-aviso"); campo = etiqueta(cont, "INPUT"); error = clase(cont, "aviso-error");
+  const colgada = diferido();
+  llamadas = [];
+  global.fetch = fetchFalso(() => colgada.p);
+  campo.value = "53551234";
+  boton.click();
+  await esperar();
+  exigir(relojes.length === 1 && relojes[0].ms === C.SEGUNDOS_AVISO * 1000, `enviarAviso: reloj de espera ${JSON.stringify(relojes.map((r) => r.ms))}`);
+  exigir(boton.disabled && boton.textContent === "Anotando…" && error.hidden, "Avisarme: colgada, sigue Anotando… antes del plazo");
+  relojes[0].f();
+  await esperar();
+  exigir(!error.hidden && error.textContent === "No se pudo anotar. Revise su conexión y toque «Avisarme» otra vez.", "Avisarme: colgada, al vencer el plazo sale el texto rojo");
+  exigir(!boton.disabled && boton.textContent === "Avisarme" && C.avisoGuardado("river2") === null, "Avisarme: colgada, se puede reintentar y no se recuerda");
+  exigir(llamadas.length === 1 && llamadas[0].op.keepalive === true, "Avisarme: la petición colgada no se cancela (keepalive)");
+  // Si la colgada llega tarde, no cambia nada en pantalla (la tienda descarta la repetida)
+  colgada.ok({ type: "opaque" });
+  await esperar();
+  exigir(!error.hidden && !boton.disabled && C.avisoGuardado("river2") === null && !clase(cont, "aviso-ok"), "Avisarme: un éxito tardío no pisa el texto rojo");
+  // El reintento sale y el reloj se desarma al contestar
+  global.fetch = fetchFalso(() => Promise.resolve({}));
+  boton.click();
+  await esperar();
+  exigir(llamadas.length === 2 && relojes.length === 2 && limpiados.includes(2), `Avisarme: el reloj del reintento no se desarmó (${JSON.stringify(limpiados)})`);
+  exigir(clase(cont, "aviso-ok").textContent === "✓ Anotado. Le avisamos por WhatsApp cuando lleguen." && C.avisoGuardado("river2") === "34", "Avisarme: colgada, el reintento anota");
+  // Una falla de red que llega antes del plazo también desarma el reloj
+  relojes = []; limpiados = [];
+  global.fetch = fetchFalso(() => Promise.reject(new TypeError("Failed to fetch")));
+  exigir(await C.enviarAviso(URL_AVISO, { id: "x" }) === false && relojes.length === 1 && limpiados.includes(1), "enviarAviso: la falla de red desarma el reloj");
+  global.setTimeout = relojReal.set;
+  global.clearTimeout = relojReal.clear;
 
   // fetch que lanza al llamarlo, o sin URL: también es falla
   global.fetch = () => { throw new Error("sin fetch"); };
@@ -410,7 +498,7 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
   global.localStorage = almacen;
   memoria.starlight_aviso_sumry = "{roto";
   exigir(C.avisoGuardado("sumry") === null, "avisoGuardado: un valor roto muestra el formulario");
-  console.log("✓ Avisarme: invitación, Anotando…, confirmación, falla de red, recuerdo por producto");
+  console.log("✓ Avisarme: invitación, Anotando…, confirmación, falla de red, plazo de espera, recuerdo por producto con vencimiento y «¿Otro número?»");
 
   // 9) Cableado de las páginas con las ayudas de carrito.js
   const leer = (f) => fs.readFileSync(path.join(RAIZ, f), "utf8");
@@ -418,6 +506,10 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
   exigir(/items:\s*Carrito\.itemsParaEnviar\(items\)/.test(pedidoHtml) && /var items=partir\(\)\.entran;/.test(pedidoHtml), "pedido.html: el envío no usa lo que entra");
   exigir(/Carrito\.sumar\(partir\(\)\.entran\)/.test(pedidoHtml), "pedido.html: el total no usa lo que entra");
   exigir(/viene:Carrito\.viene\(c, enc\)/.test(pedidoHtml), "pedido.html: no lee viene por nombre");
+  // El renglón del agotado promete el aviso: el campo siempre lleva la invitación
+  // que dice que hay que dejar el número (también cuando viene).
+  exigir(/Carrito\.pintarAviso\(cuerpo, \{id:it\.id, nombre:it\.nombre, viene:it\.viene, url:PEDIDOS_URL\}\)/.test(pedidoHtml) && !/texto\s*:/.test(pedidoHtml.match(/Carrito\.pintarAviso\([^)]*\)/)[0]),
+    "pedido.html: el renglón agotado debe pintar Avisarme con su invitación");
   exigir(/Carrito\.guardarCacheCatalogo\(filas, enc\)/.test(catalogoHtml) && /finalizar\(c, cached\.encabezado, true\)/.test(catalogoHtml), "catalogo.html: la caché no guarda o no usa el encabezado");
   exigir(/finalizar\(c, enc, false\)/.test(catalogoHtml) && /Carrito\.pintarAviso\(/.test(catalogoHtml), "catalogo.html: insignia o Avisarme sin cablear");
   exigir(indexHtml.includes("Le avisamos por WhatsApp cuando lleguen."), "index.html: la pregunta frecuente no dice la frase de D30");

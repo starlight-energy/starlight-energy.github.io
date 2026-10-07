@@ -155,7 +155,9 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     aviso.textContent=it.viene ? Carrito.TEXTOS.fueraViene : Carrito.TEXTOS.fuera;
     cuerpo.appendChild(nom);
     cuerpo.appendChild(aviso);
-    Carrito.pintarAviso(cuerpo, {id:it.id, nombre:it.nombre, viene:it.viene, url:PEDIDOS_URL, texto:!it.viene});
+    // Con la invitación también cuando viene: el renglón promete el aviso,
+    // y solo se cumple si el cliente deja aquí su número y toca «Avisarme».
+    Carrito.pintarAviso(cuerpo, {id:it.id, nombre:it.nombre, viene:it.viene, url:PEDIDOS_URL});
     var quitar=document.createElement("button");
     quitar.type="button";
     quitar.className="li-quitar";
