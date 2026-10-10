@@ -12,7 +12,7 @@
 <meta property="og:locale" content="es_ES">
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
-<link rel="stylesheet" href="estilos.css?v=5">
+<link rel="stylesheet" href="estilos.css?v=6">
 <link rel="icon" href="fotos/logo.png">
 
 <script>
@@ -118,7 +118,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js?v=4"></script>
+<script src="carrito.js?v=5"></script>
 <script>
 (function(){
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
@@ -138,13 +138,44 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   var lista = document.getElementById("lista-items");
   var chk   = document.getElementById("quiere-domicilio");
 
+  // D42: lo que la hoja recién leída da con stock 0 no entra en el pedido
+  // (ni en el mensaje ni en el total). Sin hoja, todo entra, como siempre.
+  function partir(){ return Carrito.partirPedido(Carrito.items(), infoHoja); }
+
+  function pintarFuera(it){
+    var row=document.createElement("div");
+    row.className="linea-item";
+    var cuerpo=document.createElement("div");
+    cuerpo.style.flex="1";
+    var nom=document.createElement("div");
+    nom.className="li-nombre";
+    nom.textContent=it.nombre;
+    var aviso=document.createElement("div");
+    aviso.className="li-agotado " + (it.viene ? "viene" : "agotado");
+    aviso.textContent=it.viene ? Carrito.TEXTOS.fueraViene : Carrito.TEXTOS.fuera;
+    cuerpo.appendChild(nom);
+    cuerpo.appendChild(aviso);
+    // Con la invitación también cuando viene: el renglón promete el aviso,
+    // y solo se cumple si el cliente deja aquí su número y toca «Avisarme».
+    Carrito.pintarAviso(cuerpo, {id:it.id, nombre:it.nombre, viene:it.viene, url:PEDIDOS_URL});
+    var quitar=document.createElement("button");
+    quitar.type="button";
+    quitar.className="li-quitar";
+    quitar.textContent="Quitar";
+    quitar.addEventListener("click",function(){ Carrito.quitar(it.id); pintar(); });
+    cuerpo.appendChild(quitar);
+    row.appendChild(cuerpo);
+    lista.appendChild(row);
+  }
+
   function pintar(){
-    var items = Carrito.items();
-    if(!items.length){ vacio.hidden=false; lleno.hidden=true; return; }
+    var todos = Carrito.items();
+    if(!todos.length){ vacio.hidden=false; lleno.hidden=true; return; }
     vacio.hidden=true; lleno.hidden=false;
 
+    var partes = partir();
     lista.innerHTML="";
-    items.forEach(function(it){
+    partes.entran.forEach(function(it){
       var inf = infoHoja[it.id];
       var tope = (inf && inf.stock != null && inf.stock > 0) ? inf.stock : null;
       var row=document.createElement("div");
@@ -154,7 +185,6 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
         '<div style="flex:1">'+
           '<div class="li-nombre"></div>'+
           '<div class="li-precio"></div>'+
-          (inf && inf.stock===0 ? '<div class="li-agotado">Puede estar agotado — lo confirmamos por WhatsApp</div>' : '')+
           '<button type="button" class="li-quitar">Quitar</button>'+
         '</div>'+
         '<div class="cantidad">'+
@@ -176,6 +206,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       row.querySelector(".li-quitar").addEventListener("click",function(){ Carrito.quitar(it.id); pintar(); });
       lista.appendChild(row);
     });
+    partes.fuera.forEach(pintarFuera);
     totales();
   }
 
@@ -187,9 +218,8 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   }
 
   function totales(){
-    var items=Carrito.items();
-    var sub=0, hayWA=false;
-    items.forEach(function(it){ if(it.precio==null) hayWA=true; else sub+=it.precio*it.cantidad; });
+    var suma=Carrito.sumar(partir().entran);
+    var sub=suma.sub, hayWA=suma.hayWA;
     document.getElementById("t-subtotal").textContent=usd(sub);
     document.getElementById("nota-precios").hidden=!hayWA;
 
@@ -234,11 +264,12 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
   function refrescarHoja(){
     if (typeof HOJA_URL === "undefined") return;
-    Carrito.leerHoja(HOJA_URL, function(c){
+    Carrito.leerHoja(HOJA_URL, function(c, enc){
       var id=(c[0]||"").trim().toLowerCase();
       if(!id) return;
       var stock=parseInt((c[3]||"").trim(),10);
-      infoHoja[id]={precio:Carrito.precioNum(c[2]), stock:isNaN(stock)?null:stock};
+      infoHoja[id]={precio:Carrito.precioNum(c[2]), stock:isNaN(stock)?null:stock, viene:Carrito.viene(c, enc)};
+      if(!isNaN(stock) && stock>0) Carrito.olvidarAviso(id);
     }, function(){
       var c=Carrito.cargar(), cambio=false;
       for(var k in c) if(c.hasOwnProperty(k) && infoHoja[k]){
@@ -269,8 +300,12 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     }
     err.style.display="none";
 
-    var items=Carrito.items();
-    if(!items.length) return;
+    var items=partir().entran;
+    if(!items.length){
+      err.textContent="Ningún equipo de este pedido está disponible ahora.";
+      err.style.display="block";
+      return;
+    }
 
     var btnEnviar=document.getElementById("enviar");
     btnEnviar.disabled=true;
@@ -282,11 +317,11 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     var L=[];
     L.push("Hola 👋 Quiero hacer un pedido en Starlight (pedido "+cod+"):");
     L.push("");
-    var sub=0, hayWA=false;
     items.forEach(function(it){
-      if(it.precio==null){ hayWA=true; L.push("• "+it.cantidad+"× "+it.nombre+" — precio por WhatsApp"); }
-      else { var lt=it.precio*it.cantidad; sub+=lt; L.push("• "+it.cantidad+"× "+it.nombre+" — "+usd(it.precio)+" c/u = "+usd(lt)); }
+      if(it.precio==null){ L.push("• "+it.cantidad+"× "+it.nombre+" — precio por WhatsApp"); }
+      else { L.push("• "+it.cantidad+"× "+it.nombre+" — "+usd(it.precio)+" c/u = "+usd(it.precio*it.cantidad)); }
     });
+    var suma=Carrito.sumar(items), sub=suma.sub, hayWA=suma.hayWA;
     L.push("");
     L.push("Subtotal: "+usd(sub));
 
@@ -324,7 +359,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
           nombre: nombre.value.trim(),
           telefono: tel.value.trim(),
           total: usd(sub) + (dom>0 ? " + "+cup(dom) : ""),
-          items: items.map(function(it){ return {id:it.id, nombre:it.nombre, cantidad:it.cantidad}; }),
+          items: Carrito.itemsParaEnviar(items),
           domicilio: chk.checked ? {zona:(domicilioManual?"Por coordinar":zonaNombre), costo:dom} : null
         };
         fetch(PEDIDOS_URL, {method:"POST", mode:"no-cors", keepalive:true,
