@@ -12,7 +12,7 @@
 <meta property="og:locale" content="es_ES">
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
-<link rel="stylesheet" href="estilos.css?v=6">
+<link rel="stylesheet" href="estilos.css?v=7">
 <link rel="icon" href="fotos/logo.png">
 
 <script>
@@ -118,11 +118,11 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js?v=5"></script>
+<script src="carrito.js?v=6"></script>
 <script>
 (function(){
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
-  function usd(n){ return (Math.round(n*100)/100).toLocaleString("en-US") + " USD"; }
+  var usd = Carrito.usd;
   function cup(n){ return (Math.round(n*100)/100).toLocaleString("en-US") + " CUP"; }
   function titulo(s){
     s = (s||"").replace(/\s+/g," ").trim().toLowerCase();
@@ -181,6 +181,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       var row=document.createElement("div");
       row.className="linea-item";
       var precioTxt = it.precio==null ? "Precio por WhatsApp" : usd(it.precio)+" c/u";
+      var conAntes = it.precio!=null && typeof it.antes === "number";
       row.innerHTML=
         '<div style="flex:1">'+
           '<div class="li-nombre"></div>'+
@@ -193,7 +194,15 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
           '<button type="button" class="qbtn" data-mas aria-label="Agregar uno">+</button>'+
         '</div>';
       row.querySelector(".li-nombre").textContent=it.nombre;
-      row.querySelector(".li-precio").textContent=precioTxt;
+      var liPrecio=row.querySelector(".li-precio");
+      if(conAntes){
+        var viejo=document.createElement("s");
+        viejo.textContent=usd(it.antes);
+        liPrecio.appendChild(viejo);
+        liPrecio.appendChild(document.createTextNode(" "+precioTxt));
+      } else {
+        liPrecio.textContent=precioTxt;
+      }
       var input=row.querySelector(".qinput");
       function fijar(v){ v=parseInt(v,10)||1; if(v<1)v=1; if(tope!=null&&v>tope)v=tope; input.value=v; Carrito.fijarCantidad(it.id,v); totales(); }
       row.querySelector("[data-menos]").addEventListener("click",function(){
@@ -268,12 +277,18 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       var id=(c[0]||"").trim().toLowerCase();
       if(!id) return;
       var stock=parseInt((c[3]||"").trim(),10);
-      infoHoja[id]={precio:Carrito.precioNum(c[2]), stock:isNaN(stock)?null:stock, viene:Carrito.viene(c, enc)};
+      var o=Carrito.ofertaDe(c, enc, Date.now());
+      infoHoja[id]={precio:o.precio, precioNormal:o.tachado?o.antes:null, finOferta:(o.activa&&o.finMs)?o.finMs:null, stock:isNaN(stock)?null:stock, viene:Carrito.viene(c, enc)};
       if(!isNaN(stock) && stock>0) Carrito.olvidarAviso(id);
     }, function(){
       var c=Carrito.cargar(), cambio=false;
       for(var k in c) if(c.hasOwnProperty(k) && infoHoja[k]){
         if(c[k].precio!==infoHoja[k].precio){ c[k].precio=infoHoja[k].precio; cambio=true; }
+        var pn=infoHoja[k].precioNormal, fo=infoHoja[k].finOferta;
+        if(typeof pn==="number"){ if(c[k].precioNormal!==pn){ c[k].precioNormal=pn; cambio=true; } }
+        else if("precioNormal" in c[k]){ delete c[k].precioNormal; cambio=true; }
+        if(typeof fo==="number"){ if(c[k].finOferta!==fo){ c[k].finOferta=fo; cambio=true; } }
+        else if("finOferta" in c[k]){ delete c[k].finOferta; cambio=true; }
         var st=infoHoja[k].stock;
         if(st!=null && st>0 && c[k].cantidad>st){ c[k].cantidad=st; cambio=true; }
       }
@@ -317,10 +332,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     var L=[];
     L.push("Hola 👋 Quiero hacer un pedido en Starlight (pedido "+cod+"):");
     L.push("");
-    items.forEach(function(it){
-      if(it.precio==null){ L.push("• "+it.cantidad+"× "+it.nombre+" — precio por WhatsApp"); }
-      else { L.push("• "+it.cantidad+"× "+it.nombre+" — "+usd(it.precio)+" c/u = "+usd(it.precio*it.cantidad)); }
-    });
+    items.forEach(function(it){ L.push(Carrito.textoLineaPedido(it)); });
     var suma=Carrito.sumar(items), sub=suma.sub, hayWA=suma.hayWA;
     L.push("");
     L.push("Subtotal: "+usd(sub));
@@ -374,6 +386,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
   pintar();
   cargarZonas();
   refrescarHoja();
+  Carrito.relojOfertas(function(){ pintar(); });
 })();
 </script>
 

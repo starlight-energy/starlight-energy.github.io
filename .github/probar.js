@@ -519,5 +519,187 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
   exigir(new Set(vEstilos).size === 1 && vEstilos[0], `versiones de estilos.css distintas: ${vEstilos}`);
   console.log(`✓ páginas cableadas (carrito.js?v=${vCarrito[0]}, estilos.css?v=${vEstilos[0]})`);
 
+  // 10) Ofertas v51: fin a la hora de Cuba, cuenta regresiva, precio vigente, cartel y carrito
+  const Z = (iso) => Date.parse(iso);
+  const vectoresFin = [["2026-11-30", Z("2026-12-01T05:00:00Z")], ["2027-03-13", Z("2027-03-14T05:00:00Z")], ["2027-11-06", Z("2027-11-07T04:00:00Z")],
+    ["30/11/2026", null], ["2026-11-31", null], ["", null], ["2026-11-30T00:00", null], ["2026-02-30", null], [null, null]];
+  for (const [txt, esperado] of vectoresFin) exigir(C.finOferta(txt) === esperado, `finOferta(${JSON.stringify(txt)}) = ${C.finOferta(txt)}`);
+  exigir(C.ZONA_OFERTAS === "America/Havana", "ZONA_OFERTAS");
+  const IntlReal = global.Intl.DateTimeFormat;
+  global.Intl.DateTimeFormat = function () { throw new Error("sin zonas"); };
+  exigir(C.finOferta("2026-11-30") === new Date(2026, 11, 1, 0, 0, 0).getTime(), "finOferta: sin Intl usa la medianoche del teléfono");
+  global.Intl.DateTimeFormat = IntlReal;
+  console.log(`✓ finOferta: ${vectoresFin.length} vectores y sin Intl`);
+
+  const vectoresCuenta = [[(5 * 86400 + 4 * 3600 + 12 * 60 + 9) * 1000, "5d 04:12:09"], [6.5 * 86400000, "6d 12:00:00"], [1000, "00:00:01"],
+    [999, "00:00:00"], [0, "00:00:00"], [-5000, "00:00:00"], [NaN, "00:00:00"], [86399000, "23:59:59"], [86400000, "1d 00:00:00"]];
+  for (const [ms, esperado] of vectoresCuenta) exigir(C.cuentaRegresiva(ms) === esperado, `cuentaRegresiva(${ms}) = ${C.cuentaRegresiva(ms)}`);
+  exigir(C.fechaFinTexto("2026-11-30") === "lunes 30 de noviembre" && C.fechaFinTexto("2026-11-29") === "domingo 29 de noviembre" && C.fechaFinTexto("x") === "", "fechaFinTexto");
+  console.log("✓ cuentaRegresiva y fechaFinTexto");
+
+  const ENC51 = encViene.concat("precio_antes");
+  const fila51 = (id, precio, stock, extra) => {
+    const f = [id, "P " + id, precio, String(stock)].concat(Array(11).fill(""), "");
+    const e = extra || {};
+    if ("visible" in e) f[10] = e.visible;
+    if ("oferta" in e) f[11] = e.oferta;
+    if ("fin" in e) f[12] = e.fin;
+    if ("tope" in e) f[13] = e.tope;
+    if ("antes" in e) f[15] = e.antes;
+    return f;
+  };
+  const ANTES_FIN = Z("2026-11-30T23:59:59-05:00"), FIN = Z("2026-12-01T05:00:00Z");
+  const of = (fila, enc, ahora) => C.ofertaDe(fila, enc, ahora === undefined ? ANTES_FIN : ahora);
+  let o = of(fila51("sumry", "310", 5, { oferta: "Black Friday", fin: "2026-11-30", antes: "330" }), ENC51);
+  exigir(o.activa && o.tachado && o.precio === 310 && o.antes === 330 && o.finMs === FIN && o.etiqueta === "Black Friday" && !o.termino && o.finTexto === "2026-11-30", `ofertaDe vigente: ${JSON.stringify(o)}`);
+  o = of(fila51("sumry", "310", 5, { oferta: "Black Friday", fin: "2026-11-30", antes: "330" }), ENC51, FIN);
+  exigir(!o.activa && o.termino && !o.tachado && o.etiqueta === "" && o.precio === 330 && o.precioTexto === "330" && o.finMs === null, `ofertaDe vencida vuelve a antes: ${JSON.stringify(o)}`);
+  o = of(fila51("sumry", "310", 5, { oferta: "Black Friday", fin: "2026-11-30" }), ENC51, FIN);
+  exigir(o.termino && o.precio === 310 && o.etiqueta === "", "vencida sin antes: precio de la hoja");
+  const csvViejo15 = fila51("sumry", "310", 5, { oferta: "Black Friday", fin: "2026-11-30" }).slice(0, 15);
+  o = of(csvViejo15, encViene);
+  exigir(o.activa && !o.tachado && o.antes === null && o.finMs === FIN && o.precio === 310, `CSV viejo de 15 columnas: ${JSON.stringify(o)}`);
+  o = of(fila51("sumry", "310", 5, { oferta: "Black Friday", fin: "2026-11-30", antes: "330" }), null);
+  exigir(o.activa && o.etiqueta === "Black Friday" && !o.tachado && o.finMs === null, `caché sin encabezado: ${JSON.stringify(o)}`);
+  o = of(fila51("sumry", "310", 5, { oferta: "Black Friday", fin: "", antes: "330" }), ENC51, FIN + 86400000 * 30);
+  exigir(o.activa && o.tachado && o.finMs === null, "fin vacío: oferta sin fin, con tachado, sin cuenta");
+  for (const malo of ["11/30/2026", "30/11/2026", "2026-11-31", "algo"]) {
+    o = of(fila51("sumry", "310", 5, { oferta: "BF", fin: malo, antes: "330" }), ENC51, FIN);
+    exigir(o.activa && o.finMs === null && o.tachado, `fin inválido ${malo}`);
+  }
+  o = of(fila51("sumry", "310", 5, { oferta: "BF", fin: "2026-11-30" }), ENC51);
+  exigir(o.activa && !o.tachado && o.antes === null, "sin precio_antes: solo etiqueta");
+  o = of(fila51("sumry", "310", 5, { oferta: "BF", fin: "2026-11-30", antes: "310" }), ENC51);
+  exigir(o.activa && !o.tachado && o.finMs === FIN, "antes <= precio: sin tachado, con cuenta");
+  o = of(fila51("sumry", "Consultar", 5, { oferta: "BF", fin: "2026-11-30", antes: "330" }), ENC51);
+  exigir(o.activa && !o.tachado && o.precio === null && o.precioTexto === "Consultar", "precio Consultar: sin tachado");
+  o = of(fila51("sumry", "Consultar", 5, { oferta: "BF", fin: "2026-11-30", antes: "330" }), ENC51, FIN);
+  exigir(o.termino && o.precio === null && o.precioTexto === "Consultar", "vencida con Consultar se respeta");
+  o = of(fila51("sumry", "310", 5, { oferta: "", fin: "2026-11-30", antes: "330" }), ENC51);
+  exigir(!o.activa && !o.termino && o.precio === 310 && o.antes === null, "sin etiqueta con antes: sin oferta");
+  o = of(fila51("sumry", "310", 3, { oferta: "BF", fin: "2026-11-30", tope: "3", antes: "330" }), ENC51);
+  exigir(o.termino && o.precio === 330, "tope alcanzado: terminó");
+  o = of(fila51("sumry", "310", 4, { oferta: "BF", fin: "2026-11-30", tope: "3", antes: "330" }), ENC51);
+  exigir(o.activa, "tope no alcanzado: sigue");
+  o = C.ofertaDe(null, ENC51, ANTES_FIN);
+  exigir(!o.activa && o.precio === null, "fila nula: sin oferta");
+  const basura = new Proxy([], { get: (t, k) => { if (k === "2") return "310"; if (k === "0" || k === "length") throw new Error("basura"); return undefined; } });
+  o = C.ofertaDe(basura, ENC51, ANTES_FIN);
+  exigir(!o.activa && o.precio === 310, `fila basura que lanza: ${JSON.stringify(o)}`);
+  console.log("✓ ofertaDe: la tabla de degradación entera");
+
+  const filasB = [
+    fila51("sumry", "310", 5, { oferta: "Black Friday", fin: "2026-11-30", antes: "330" }),
+    fila51("bat1", "500", 0, { oferta: "Black Friday", fin: "2026-11-30", antes: "520" }),
+    fila51("bat2", "480", 2, { oferta: "Black Friday", fin: "2026-11-30", antes: "530" }),
+    fila51("oculto", "100", 2, { visible: "no", oferta: "Otra", fin: "2026-11-25", antes: "900" }),
+    fila51("x", "50", 2, { oferta: "Otra", fin: "2026-11-28", antes: "55" }),
+    fila51("sinfecha", "50", 2, { oferta: "Sin fecha", antes: "60" }),
+    fila51("", "50", 2, { oferta: "Vacía", fin: "2026-11-27" })
+  ];
+  let b = C.bannerOfertas(filasB, ENC51, Z("2026-11-24T12:00:00-05:00"));
+  exigir(b && b.titulo === "Black Friday" && b.n === 4 && b.conTachado === 4 && b.ahorroMax === 50 && b.finMs === Z("2026-11-29T05:00:00Z") && b.primerId === "sumry" && b.finTexto === "2026-11-28", `bannerOfertas: ${JSON.stringify(b)}`);
+  b = C.bannerOfertas([fila51("a", "10", 2, { oferta: "Uno", fin: "2026-11-30" }), fila51("b", "10", 2, { oferta: "Dos", fin: "2026-11-28" })], ENC51, ANTES_FIN - 3 * 86400000);
+  exigir(b.titulo === "Dos" && b.conTachado === 0 && b.ahorroMax === 0 && b.primerId === "a", `empate por fin: ${JSON.stringify(b)}`);
+  b = C.bannerOfertas([fila51("a", "10", 2, { oferta: "Uno", fin: "2026-11-30" }), fila51("b", "10", 2, { oferta: "Dos", fin: "2026-11-30" })], ENC51, ANTES_FIN);
+  exigir(b.titulo === "Uno", "empate total: el primero");
+  exigir(C.bannerOfertas([fila51("a", "10", 2, { oferta: "Uno" })], ENC51, ANTES_FIN) === null, "sin fechas: sin cartel");
+  exigir(C.bannerOfertas(filasB, ENC51, FIN) === null, "después del fin: sin cartel");
+  exigir(C.bannerOfertas(null, ENC51) === null && C.bannerOfertas([basura], ENC51) === null, "basura: sin cartel");
+  exigir(C.textoCartel({ n: 4, conTachado: 4, ahorroMax: 50 }) === "4 productos rebajados · hasta 50 USD menos", "T2+T3b");
+  exigir(C.textoCartel({ n: 1, conTachado: 1, ahorroMax: 20 }) === "1 producto rebajado · hasta 20 USD menos", "T2 singular");
+  exigir(C.textoCartel({ n: 2, conTachado: 0, ahorroMax: 0 }) === "2 productos en oferta" && C.textoCartel({ n: 1, conTachado: 0, ahorroMax: 0 }) === "1 producto en oferta", "T3");
+  exigir(C.textoFinLector("2026-11-30") === "La oferta termina el lunes 30 de noviembre a las 11:59 p. m., hora de Cuba.", "T5");
+  console.log("✓ bannerOfertas: ocultos fuera, mayoría, empates, fin más temprano y ahorro");
+
+  for (const k of Object.keys(memoria)) delete memoria[k];
+  global.localStorage = almacen;
+  const DateReal = Date;
+  let reloj = ANTES_FIN;
+  global.Date = class extends DateReal { constructor(...a) { if (a.length) super(...a); else super(reloj); } static now() { return reloj; } };
+  C.agregar("sumry", { nombre: "Inversor Sumry", articulo: "el", precio: 310, precioNormal: 330, finOferta: FIN }, 2);
+  C.agregar("viejo", { nombre: "Viejo", articulo: "el", precio: 100 }, 1);
+  let its = C.items();
+  exigir(its[0].precio === 310 && its[0].antes === 330 && its[1].antes === null && its[1].precio === 100, `items antes del fin: ${JSON.stringify(its)}`);
+  exigir(C.sumar(its).sub === 720 && C.itemsParaEnviar(its)[0].precio === 310, "sumar/enviar antes del fin");
+  exigir(C.textoLineaPedido(its[0]) === "• 2× Inversor Sumry — 310 USD c/u (oferta, antes 330 USD) = 620 USD", `T8: ${C.textoLineaPedido(its[0])}`);
+  exigir(C.textoLineaPedido(its[1]) === "• 1× Viejo — 100 USD c/u = 100 USD", "renglón de siempre");
+  exigir(C.textoLineaPedido({ nombre: "MC4", cantidad: 3, precio: null }) === "• 3× MC4 — precio por WhatsApp", "renglón sin precio");
+  reloj = FIN;
+  its = C.items();
+  exigir(its[0].precio === 330 && its[0].antes === null, `items después del fin: ${JSON.stringify(its)}`);
+  exigir(C.sumar(its).sub === 760 && C.itemsParaEnviar(its)[0].precio === 330 && C.textoLineaPedido(its[0]) === "• 2× Inversor Sumry — 330 USD c/u = 660 USD", "después del fin todo en 330");
+  C.agregar("sumry", { nombre: "Inversor Sumry", articulo: "el", precio: 330 }, 1);
+  const crudoCarrito = JSON.parse(memoria.starlight_pedido_v1);
+  exigir(!("precioNormal" in crudoCarrito.sumry) && !("finOferta" in crudoCarrito.sumry) && crudoCarrito.sumry.cantidad === 3, "agregar sin oferta borra los campos");
+  memoria.starlight_pedido_v1 = JSON.stringify({ delta2: { nombre: "D", articulo: "la", precio: 650, cantidad: 1 } });
+  exigir(JSON.stringify(C.items()) === JSON.stringify([{ id: "delta2", nombre: "D", articulo: "la", precio: 650, cantidad: 1, antes: null }]), "carrito viejo sin campos");
+  exigir(C.usd(1200) === "1,200 USD" && C.usd(99.999) === "100 USD", "usd");
+  console.log("✓ carrito: precio vigente antes y después del fin, T8, carrito viejo");
+
+  const intervalos = [];
+  const oyentesDoc = [];
+  const setIntervalReal = global.setInterval;
+  global.setInterval = (f, ms) => { intervalos.push({ f, ms }); return intervalos.length; };
+  global.document.addEventListener = (tipo, f) => oyentesDoc.push({ tipo, f });
+  const spanCuenta = { atributos: { "data-fin-ms": String(FIN + 3000) }, getAttribute(k) { return this.atributos[k]; }, textContent: "" };
+  global.document.querySelectorAll = (sel) => (sel === "[data-fin-ms]" ? [spanCuenta] : []);
+  memoria.starlight_pedido_v1 = JSON.stringify({ sumry: { nombre: "S", articulo: "el", precio: 310, precioNormal: 330, finOferta: FIN + 5000, cantidad: 1 } });
+  let vencidos = 0;
+  reloj = FIN;
+  C.relojOfertas(() => { vencidos++; });
+  C.relojOfertas(() => { vencidos += 10; });
+  exigir(intervalos.length === 1 && intervalos[0].ms === 1000 && oyentesDoc.filter((x) => x.tipo === "visibilitychange").length === 1, "un solo reloj por página");
+  intervalos[0].f();
+  exigir(spanCuenta.textContent === "00:00:03" && vencidos === 0, `tic: ${spanCuenta.textContent}`);
+  reloj = FIN + 3000;
+  global.document.hidden = true;
+  intervalos[0].f();
+  exigir(spanCuenta.textContent === "00:00:03" && vencidos === 0, "pestaña oculta: no hace nada");
+  global.document.hidden = false;
+  oyentesDoc.find((x) => x.tipo === "visibilitychange").f();
+  exigir(spanCuenta.textContent === "00:00:00" && vencidos === 11, `al volver: tic inmediato y aviso (${vencidos})`);
+  intervalos[0].f();
+  exigir(vencidos === 11, "cada fin se avisa una vez");
+  reloj = FIN + 5000;
+  intervalos[0].f();
+  exigir(vencidos === 22, "el fin del carrito también avisa");
+  global.setInterval = setIntervalReal;
+  global.Date = DateReal;
+  global.document.querySelectorAll = () => [];
+  console.log("✓ relojOfertas: uno por página, pestaña oculta, aviso una vez por fin, también el del carrito");
+
+  const cartelDoc = new Nodo("section");
+  cartelDoc.removeAttribute = (k) => { delete cartelDoc.atributos[k]; };
+  cartelDoc.getAttribute = (k) => (k in cartelDoc.atributos ? cartelDoc.atributos[k] : null);
+  cartelDoc.hidden = true;
+  const bc = C.bannerOfertas(filasB, ENC51, Z("2026-11-24T12:00:00-05:00"));
+  C.pintarCartel(cartelDoc, bc, "catalogo.html#sumry");
+  exigir(!cartelDoc.hidden && cartelDoc.children[0].textContent === "🔥 Black Friday" && cartelDoc.children[1].textContent === "4 productos rebajados · hasta 50 USD menos", `cartel: ${cartelDoc.textContent}`);
+  const fila3 = cartelDoc.children[2];
+  exigir(fila3.children[0].atributos["aria-hidden"] === "true" && fila3.children[0].textContent === "Termina en " && fila3.children[1].atributos["data-fin-ms"] === String(bc.finMs) && fila3.children[1].atributos["aria-hidden"] === "true" && fila3.children[2].className === "solo-lector", "cartel: la cuenta no se anuncia y el lector oye T5");
+  exigir(cartelDoc.children[3].textContent === "Ver ofertas →" && cartelDoc.children[3].href === "catalogo.html#sumry", "cartel: botón T22");
+  const primerHijo = cartelDoc.children[0];
+  C.pintarCartel(cartelDoc, bc, "catalogo.html#sumry");
+  exigir(cartelDoc.children[0] === primerHijo, "cartel: sin cambios no se vuelve a pintar (el lector no lo repite)");
+  C.pintarCartel(cartelDoc, null, "x");
+  exigir(cartelDoc.hidden && cartelDoc.children.length === 0, "cartel: sin oferta se oculta");
+  console.log("✓ pintarCartel: T1, T2/T3b, T4, T5, T22, accesible y sin repintar");
+
+  const css = leer("estilos.css");
+  exigir(/prefers-reduced-motion:\s*reduce/.test(css) && /\.solo-lector\{/.test(css) && /\.cartel-oferta\[hidden\]\{display:none\}/.test(css) && /tabular-nums/.test(css), "estilos.css: movimiento reducido, solo-lector, hidden y números fijos");
+  exigir(/--oferta-fondo:#111111;/.test(css) && /--oferta-rojo:#c62828;/.test(css) && /--oferta-oro:#f5b301;/.test(css), "estilos.css: colores del cartel");
+  const lum = (hex) => { const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const contraste = (a, b2) => { const x = lum(a), y = lum(b2); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  [["#ffffff", "#111111"], ["#f5b301", "#111111"], ["#ffffff", "#c62828"], ["#111111", "#f5b301"]].forEach(([a, b2]) => exigir(contraste(a, b2) >= 4.5, `contraste ${a}/${b2}: ${contraste(a, b2)}`));
+  exigir(/id="cartel-oferta"[^>]*aria-live="polite"/.test(indexHtml) && /id="cartel-oferta"/.test(catalogoHtml) && !/cartel-oferta/.test(pedidoHtml) && !/cartel-oferta/.test(leer("404.html")), "el cartel va en inicio y catálogo, no en pedido ni en la 404");
+  exigir(vCarrito[0] === "6" && vEstilos[0] === "7", `versiones v51: ${vCarrito[0]} ${vEstilos[0]}`);
+  exigir(/Carrito\.textoLineaPedido\(it\)/.test(pedidoHtml) && /Carrito\.ofertaDe\(c, enc, Date\.now\(\)\)/.test(pedidoHtml) && /Carrito\.relojOfertas\(/.test(pedidoHtml), "pedido.html: usa ofertaDe, textoLineaPedido y el reloj");
+  exigir(/Carrito\.ofertaDe\(c, enc, Date\.now\(\)\)/.test(catalogoHtml) && /precioNormal:precioNormal, finOferta:finOferta/.test(catalogoHtml) && /Carrito\.relojOfertas\(alVencer\)/.test(catalogoHtml), "catalogo.html: usa ofertaDe, guarda precio normal y fin, y el reloj");
+  exigir(!/c\[11\]/.test(indexHtml) && /construirPrevia\(c, enc\)/.test(indexHtml), "index.html: la oferta por nombre, no por posición");
+  const codigoSitio = ["carrito.js", "index.html", "catalogo.html", "pedido.html"].map(leer).join("\n");
+  exigir(!/-05:00|5 \* 3600|18000000/.test(codigoSitio) && (codigoSitio.match(/America\/Havana/g) || []).length === 1, "sin desfases fijos; la zona en un solo lugar");
+  console.log("✓ páginas v51: cartel, colores con contraste, versiones y cableado de ofertas");
+
   console.log("TODO OK");
 })();

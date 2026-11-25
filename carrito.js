@@ -13,6 +13,13 @@
     actualizarInsignia();
   }
 
+  function ponerOferta(it, datos) {
+    if (typeof datos.precioNormal === "number" && isFinite(datos.precioNormal)) it.precioNormal = datos.precioNormal;
+    else delete it.precioNormal;
+    if (typeof datos.finOferta === "number" && isFinite(datos.finOferta)) it.finOferta = datos.finOferta;
+    else delete it.finOferta;
+  }
+
   function agregar(id, datos, cant) {
     var c = cargar();
     cant = Math.max(1, parseInt(cant, 10) || 1);
@@ -27,6 +34,7 @@
         cantidad: cant
       };
     }
+    ponerOferta(c[id], datos);
     if (datos.tope != null && c[id].cantidad > datos.tope) c[id].cantidad = datos.tope;
     guardar(c);
     return c[id].cantidad;
@@ -50,9 +58,13 @@
   }
 
   function items() {
-    var c = cargar(), arr = [];
+    var c = cargar(), arr = [], ahora = Date.now();
     for (var k in c) if (c.hasOwnProperty(k)) {
-      arr.push({ id: k, nombre: c[k].nombre, articulo: c[k].articulo, precio: c[k].precio, cantidad: c[k].cantidad });
+      var precio = c[k].precio, normal = c[k].precioNormal, fin = c[k].finOferta, antes = null;
+      var vencida = typeof fin === "number" && ahora >= fin;
+      if (vencida && typeof normal === "number") precio = normal;
+      if (!vencida && typeof normal === "number" && typeof precio === "number" && normal > precio) antes = normal;
+      arr.push({ id: k, nombre: c[k].nombre, articulo: c[k].articulo, precio: precio, cantidad: c[k].cantidad, antes: antes });
     }
     return arr;
   }
@@ -434,6 +446,219 @@
     });
   }
 
+  function usd(n) { return (Math.round(n * 100) / 100).toLocaleString("en-US") + " USD"; }
+
+  function textoLineaPedido(it) {
+    if (it.precio == null) return "• " + it.cantidad + "× " + it.nombre + " — precio por WhatsApp";
+    if (typeof it.antes === "number") return "• " + it.cantidad + "× " + it.nombre + " — " + usd(it.precio) + " c/u (oferta, antes " + usd(it.antes) + ") = " + usd(it.precio * it.cantidad);
+    return "• " + it.cantidad + "× " + it.nombre + " — " + usd(it.precio) + " c/u = " + usd(it.precio * it.cantidad);
+  }
+
+  var ZONA_OFERTAS = "America/Havana";
+
+  function desfaseZona(ms) {
+    ms = Math.round(ms / 1000) * 1000;
+    var v = {};
+    new Intl.DateTimeFormat("en-US", { timeZone: ZONA_OFERTAS, hour12: false, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      .formatToParts(new Date(ms)).forEach(function (p) { v[p.type] = p.value; });
+    var hora = Number(v.hour) === 24 ? 0 : Number(v.hour);
+    var reloj = Date.UTC(Number(v.year), Number(v.month) - 1, Number(v.day), hora, Number(v.minute), Number(v.second));
+    var d = reloj - ms;
+    if (isNaN(d)) throw new Error("zona");
+    return d;
+  }
+
+  function partesFecha(texto) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(texto == null ? "" : texto));
+    if (!m) return null;
+    var a = Number(m[1]), mes = Number(m[2]), d = Number(m[3]);
+    var f = new Date(Date.UTC(a, mes - 1, d));
+    if (f.getUTCFullYear() !== a || f.getUTCMonth() !== mes - 1 || f.getUTCDate() !== d) return null;
+    return { a: a, m: mes, d: d, dia: f.getUTCDay() };
+  }
+
+  function finOferta(texto) {
+    var p = partesFecha(texto);
+    if (!p) return null;
+    try {
+      var g = Date.UTC(p.a, p.m - 1, p.d + 1, 0, 0, 0);
+      var x = g - desfaseZona(g);
+      var y = g - desfaseZona(x);
+      var c = [x, y].sort(function (a, b) { return a - b; });
+      for (var i = 0; i < c.length; i++) {
+        if (c[i] + desfaseZona(c[i]) >= g) return c[i];
+      }
+      return c[c.length - 1];
+    } catch (e) {
+      return new Date(p.a, p.m - 1, p.d + 1, 0, 0, 0).getTime();
+    }
+  }
+
+  var DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+  var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+  function fechaFinTexto(texto) {
+    var p = partesFecha(String(texto == null ? "" : texto).trim());
+    return p ? DIAS[p.dia] + " " + p.d + " de " + MESES[p.m - 1] : "";
+  }
+
+  function dosCifras(n) { return (n < 10 ? "0" : "") + n; }
+
+  function cuentaRegresiva(ms) {
+    var s = Math.max(0, Math.floor(ms / 1000));
+    if (!isFinite(s)) s = 0;
+    var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+    s = s % 60;
+    var reloj = dosCifras(h) + ":" + dosCifras(m) + ":" + dosCifras(s);
+    return d >= 1 ? d + "d " + reloj : reloj;
+  }
+
+  function sinOferta(fila) {
+    var precio = null, texto = "";
+    try { precio = precioNum(fila[2]); texto = String(fila[2] == null ? "" : fila[2]).trim(); } catch (e) {}
+    return { etiqueta: "", precio: precio, precioTexto: texto, antes: null, tachado: false, finMs: null, finTexto: "", activa: false, termino: false };
+  }
+
+  function ofertaDe(fila, enc, ahora) {
+    try {
+      if (typeof ahora !== "number") ahora = Date.now();
+      var base = sinOferta(fila);
+      var etiqueta = celda(fila, enc, "oferta", 11).trim();
+      if (!etiqueta) return base;
+      var antes = precioNum(celda(fila, enc, "precio_antes"));
+      var finTexto = celda(fila, enc, "oferta_fin").trim();
+      var finMs = finOferta(finTexto);
+      var tope = celda(fila, enc, "oferta_tope").trim();
+      var stock = parseInt(String(fila[3] == null ? "" : fila[3]).trim(), 10);
+      var porTope = /^\d+$/.test(tope) && !isNaN(stock) && stock <= Number(tope);
+      var precioHoja = base.precio;
+      if ((finMs !== null && ahora >= finMs) || porTope) {
+        var vuelve = antes !== null && precioHoja !== null && antes > precioHoja;
+        return { etiqueta: "", precio: vuelve ? antes : precioHoja, precioTexto: vuelve ? String(antes) : base.precioTexto, antes: null, tachado: false, finMs: null, finTexto: "", activa: false, termino: true };
+      }
+      return { etiqueta: etiqueta, precio: precioHoja, precioTexto: base.precioTexto, antes: antes, tachado: antes !== null && precioHoja !== null && antes > precioHoja, finMs: finMs, finTexto: finMs !== null ? finTexto : "", activa: true, termino: false };
+    } catch (e) {
+      return sinOferta(fila);
+    }
+  }
+
+  function bannerOfertas(filas, enc, ahora) {
+    try {
+      if (typeof ahora !== "number") ahora = Date.now();
+      var cuenta = {}, orden = [], b = null;
+      (filas || []).forEach(function (c) {
+        var id = String(c && c[0] != null ? c[0] : "").trim().toLowerCase();
+        if (!id || esOculto(c, enc)) return;
+        var o = ofertaDe(c, enc, ahora);
+        if (!o.activa || o.finMs === null) return;
+        if (!b) b = { titulo: "", n: 0, conTachado: 0, ahorroMax: 0, finMs: o.finMs, finTexto: o.finTexto, primerId: id };
+        b.n++;
+        if (o.tachado) {
+          b.conTachado++;
+          b.ahorroMax = Math.max(b.ahorroMax, Math.round((o.antes - o.precio) * 100) / 100);
+        }
+        if (o.finMs < b.finMs) { b.finMs = o.finMs; b.finTexto = o.finTexto; }
+        if (!cuenta[o.etiqueta]) { cuenta[o.etiqueta] = { n: 0, fin: o.finMs }; orden.push(o.etiqueta); }
+        cuenta[o.etiqueta].n++;
+        cuenta[o.etiqueta].fin = Math.min(cuenta[o.etiqueta].fin, o.finMs);
+      });
+      if (!b) return null;
+      var mejor = orden[0];
+      orden.forEach(function (e) {
+        var a = cuenta[e], m = cuenta[mejor];
+        if (a.n > m.n || (a.n === m.n && a.fin < m.fin)) mejor = e;
+      });
+      b.titulo = mejor;
+      return b;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function textoCartel(b) {
+    var linea = b.conTachado > 0
+      ? (b.n === 1 ? "1 producto rebajado" : b.n + " productos rebajados")
+      : (b.n === 1 ? "1 producto en oferta" : b.n + " productos en oferta");
+    if (b.ahorroMax >= 1) linea += " · hasta " + usd(b.ahorroMax).replace(" USD", "") + " USD menos";
+    return linea;
+  }
+
+  function textoFinLector(finTexto) {
+    var f = fechaFinTexto(finTexto);
+    return f ? "La oferta termina el " + f + " a las 11:59 p. m., hora de Cuba." : "";
+  }
+
+  function pintarCartel(el, b, href) {
+    try {
+      if (!el) return;
+      if (!b) { el.hidden = true; el.textContent = ""; el.removeAttribute("data-clave"); return; }
+      var clave = JSON.stringify([b.titulo, b.n, b.conTachado, b.ahorroMax, b.finMs, href]);
+      if (el.getAttribute("data-clave") === clave && !el.hidden) return;
+      el.setAttribute("data-clave", clave);
+      el.textContent = "";
+      el.appendChild(nuevo("h2", "", "🔥 " + b.titulo));
+      el.appendChild(nuevo("p", "cartel-linea", textoCartel(b)));
+      var p = nuevo("p", "cartel-cuenta");
+      var t = nuevo("span", "", "Termina en ");
+      t.setAttribute("aria-hidden", "true");
+      var cuenta = nuevo("span", "cuenta", cuentaRegresiva(b.finMs - Date.now()));
+      cuenta.setAttribute("data-fin-ms", String(b.finMs));
+      cuenta.setAttribute("aria-hidden", "true");
+      p.appendChild(t);
+      p.appendChild(cuenta);
+      p.appendChild(nuevo("span", "solo-lector", textoFinLector(b.finTexto)));
+      el.appendChild(p);
+      var a = nuevo("a", "", "Ver ofertas →");
+      a.href = href;
+      el.appendChild(a);
+      el.hidden = false;
+    } catch (e) {
+      try { el.hidden = true; } catch (e2) {}
+    }
+  }
+
+  var relojId = null, alVencerLista = [], avisados = {};
+
+  function finesActuales() {
+    var fines = [];
+    try {
+      document.querySelectorAll("[data-fin-ms]").forEach(function (el) {
+        var f = Number(el.getAttribute("data-fin-ms"));
+        if (isFinite(f) && f > 0) fines.push({ fin: f, el: el });
+      });
+    } catch (e) {}
+    try {
+      var c = cargar();
+      for (var k in c) if (c.hasOwnProperty(k) && typeof c[k].finOferta === "number") fines.push({ fin: c[k].finOferta, el: null });
+    } catch (e) {}
+    return fines;
+  }
+
+  function ticReloj() {
+    try {
+      if (document.hidden) return;
+      var ahora = Date.now(), vencidos = [];
+      finesActuales().forEach(function (x) {
+        if (x.el) x.el.textContent = cuentaRegresiva(x.fin - ahora);
+        if (x.fin <= ahora && !avisados[x.fin]) { avisados[x.fin] = true; vencidos.push(x.fin); }
+      });
+      vencidos.forEach(function () {
+        alVencerLista.forEach(function (f) { try { f(); } catch (e) {} });
+      });
+    } catch (e) {}
+  }
+
+  function relojOfertas(alVencer) {
+    try {
+      if (typeof alVencer === "function") alVencerLista.push(alVencer);
+      if (relojId !== null) return;
+      var ahora = Date.now();
+      finesActuales().forEach(function (x) { if (x.fin <= ahora) avisados[x.fin] = true; });
+      relojId = setInterval(ticReloj, 1000);
+      document.addEventListener("visibilitychange", function () { if (!document.hidden) ticReloj(); });
+    } catch (e) {}
+  }
+
   function actualizarInsignia() {
     var n = contar();
     document.querySelectorAll("[data-carrito-cuenta]").forEach(function (el) {
@@ -457,7 +682,11 @@
     avisoGuardado: avisoGuardado, recordarAviso: recordarAviso, olvidarAviso: olvidarAviso,
     enviarAviso: enviarAviso, pintarAviso: pintarAviso,
     DIAS_AVISO: DIAS_AVISO, SEGUNDOS_AVISO: SEGUNDOS_AVISO,
-    partirPedido: partirPedido, sumar: sumar, itemsParaEnviar: itemsParaEnviar
+    partirPedido: partirPedido, sumar: sumar, itemsParaEnviar: itemsParaEnviar,
+    usd: usd, textoLineaPedido: textoLineaPedido,
+    ZONA_OFERTAS: ZONA_OFERTAS, finOferta: finOferta, fechaFinTexto: fechaFinTexto, cuentaRegresiva: cuentaRegresiva,
+    ofertaDe: ofertaDe, bannerOfertas: bannerOfertas, textoCartel: textoCartel, textoFinLector: textoFinLector,
+    pintarCartel: pintarCartel, relojOfertas: relojOfertas, ticReloj: ticReloj
   };
 
   document.addEventListener("DOMContentLoaded", actualizarInsignia);

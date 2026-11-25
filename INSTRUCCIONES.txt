@@ -128,6 +128,28 @@ COPIA DE SEGURIDAD DE TU HOJA (semanal y automática)
   (Esto se activa UNA sola vez ejecutando "activarRespaldo" en el
    editor de Apps Script; después no hay que tocarlo más.)
 
+OFERTAS CON PRECIO TACHADO Y CUENTA REGRESIVA (v51)
+  En el panel, para cada producto de la oferta:
+  1. Toca "Cambiar" en el precio y escribe el precio rebajado
+     (por ejemplo 310). Guardar.
+  2. Toca "Editar" y llena:
+     - Oferta: el nombre de la oferta, igual en todos los productos
+       (por ejemplo: Black Friday). Ese nombre sale en el cartel.
+     - Último día de la oferta: la fecha. Termina a las 11:59 p. m.
+       de ese día, hora de Cuba.
+     - Precio normal: el precio de antes (por ejemplo 330). Tiene
+       que ser mayor que el precio de ahora.
+     Guardar.
+  En el sitio sale un cartel negro con la cuenta regresiva y, en cada
+  producto, el precio viejo tachado y el nuevo en rojo.
+  Al terminar, el sitio vuelve solo al precio normal en ese momento;
+  la hoja y el panel, en menos de una hora. A las 9 de la mañana el
+  canal recibe un aviso de que terminó.
+  Para terminarla antes: Editar, borra "Oferta" y Guardar: el
+  producto vuelve al precio normal enseguida.
+  Si dejas "Precio normal" vacío, la oferta sale solo con la
+  etiqueta dorada, sin tachado ni cuenta, y el precio no vuelve solo.
+
 CANAL DE TELEGRAM
   El canal de anuncios es  https://t.me/starlight_solutions  y está
   enlazado en la página de inicio (Contacto) y en el pie de todas

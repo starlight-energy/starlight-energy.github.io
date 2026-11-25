@@ -13,7 +13,7 @@
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
 
-<link rel="stylesheet" href="estilos.css?v=6">
+<link rel="stylesheet" href="estilos.css?v=7">
 <link rel="icon" href="fotos/logo.png">
 
 <script>
@@ -36,6 +36,8 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
     </ul>
   </div>
 </nav>
+
+<section id="cartel-oferta" class="cartel-oferta" hidden aria-live="polite" aria-label="Oferta"></section>
 
 <noscript><div class="contenedor"><p class="nojs">Su navegador tiene JavaScript desactivado y algunas funciones del sitio no van a funcionar. Escríbanos por WhatsApp al +53 63918876 y le atendemos igual.</p></div></noscript>
 
@@ -185,10 +187,10 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
 
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js?v=5"></script>
+<script src="carrito.js?v=6"></script>
 <script>
 (function(){
-  function construirPrevia(c){
+  function construirPrevia(c, enc){
     var id = (c[0] || "").trim().toLowerCase();
     var nombre = c[1] || "";
     var texto = (c[9] || "").trim();
@@ -205,12 +207,28 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
       p.textContent = blurb;
       a.appendChild(p);
     }
-    var ofertaTexto = String(c[11] || "").trim();
-    if (ofertaTexto){
+    var o = Carrito.ofertaDe(c, enc, Date.now());
+    if (o.activa){
       var oferta = document.createElement("div");
       oferta.className = "oferta-producto";
-      oferta.textContent = "🏷️ " + ofertaTexto;
+      oferta.textContent = "🏷️ " + o.etiqueta;
       a.appendChild(oferta);
+    }
+    if (o.activa && o.tachado){
+      var precio = document.createElement("div");
+      precio.className = "previa-precio";
+      var visible = document.createElement("span");
+      visible.setAttribute("aria-hidden", "true");
+      var viejo = document.createElement("s");
+      viejo.textContent = Carrito.usd(o.antes);
+      visible.appendChild(viejo);
+      visible.appendChild(document.createTextNode(" " + Carrito.usd(o.precio)));
+      var lector = document.createElement("span");
+      lector.className = "solo-lector";
+      lector.textContent = "Antes " + Carrito.usd(o.antes) + ", ahora " + Carrito.usd(o.precio) + ".";
+      precio.appendChild(visible);
+      precio.appendChild(lector);
+      a.appendChild(precio);
     }
     var span = document.createElement("span");
     span.className = "ver";
@@ -222,12 +240,20 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
   var contPrevias = document.getElementById("previas-productos");
   var seccionProductos = document.getElementById("seccion-productos");
 
-  function pintarPrevias(filas){
+  var cartel = document.getElementById("cartel-oferta");
+  var ultimas = { filas: [], enc: null, previas: false };
+
+  function pintarCartel(filas, enc){
+    var b = Carrito.bannerOfertas(filas, enc, Date.now());
+    Carrito.pintarCartel(cartel, b, b ? "catalogo.html#" + b.primerId : "catalogo.html");
+  }
+
+  function pintarPrevias(filas, enc){
     contPrevias.innerHTML = "";
     filas.forEach(function(c){
       if (!(c[0] || "").trim()) return;
-      if (Carrito.esOculto(c)) return;
-      contPrevias.appendChild(construirPrevia(c));
+      if (Carrito.esOculto(c, enc)) return;
+      contPrevias.appendChild(construirPrevia(c, enc));
     });
     if (contPrevias.children.length === 0) seccionProductos.hidden = true;
     else seccionProductos.hidden = false;
@@ -238,10 +264,12 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
     try { cached = JSON.parse(localStorage.getItem("starlight_catalogo_v1")); } catch(e){}
     var fecha = null;
     var filas = null;
+    var enc = null;
     if (Array.isArray(cached)) filas = cached;
-    else if (cached && Array.isArray(cached.filas)){ fecha = cached.fecha; filas = cached.filas; }
+    else if (cached && Array.isArray(cached.filas)){ fecha = cached.fecha; filas = cached.filas; enc = Array.isArray(cached.encabezado) ? cached.encabezado : null; }
     if (filas && filas.length){
-      pintarPrevias(filas);
+      ultimas = { filas: filas, enc: enc, previas: true };
+      pintarPrevias(filas, enc);
       if (!(typeof fecha === "number" && isFinite(fecha) && Date.now() - fecha <= 86400000)){
         var dias = typeof fecha === "number" && isFinite(fecha) ? Math.max(1, Math.floor((Date.now() - fecha) / 86400000)) : 1;
         var aviso = document.createElement("p");
@@ -253,15 +281,34 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPsP0MC9Q6pmk
     else { seccionProductos.hidden = true; }
   }
 
+  try {
+    var guardada = Carrito.leerCacheCatalogo();
+    if (guardada && guardada.filas.length){
+      ultimas = { filas: guardada.filas, enc: guardada.encabezado, previas: false };
+      pintarCartel(guardada.filas, guardada.encabezado);
+    }
+  } catch(e){}
+
   var filasPrevias = [];
   Carrito.leerHoja(HOJA_URL, function(c){
     filasPrevias.push(c);
-  }, function(){
-    if (filasPrevias.length > 0){ pintarPrevias(filasPrevias); }
+  }, function(enc){
+    if (filasPrevias.length > 0){
+      ultimas = { filas: filasPrevias, enc: enc, previas: true };
+      pintarPrevias(filasPrevias, enc);
+      try { pintarCartel(filasPrevias, enc); } catch(e){}
+    }
     else { pintarPreviasDesdeCache(); }
   }, function(){
     pintarPreviasDesdeCache();
   }, {encabezado:["id","producto","precio","stock"]});
+
+  Carrito.relojOfertas(function(){
+    try {
+      if (ultimas.previas) pintarPrevias(ultimas.filas, ultimas.enc);
+      pintarCartel(ultimas.filas, ultimas.enc);
+    } catch(e){}
+  });
 
   function wa(m){return "https://wa.me/"+TELEFONO+"?text="+encodeURIComponent(m);}
   var h=document.getElementById("wa-hero");

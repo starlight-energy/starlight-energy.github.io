@@ -13,7 +13,7 @@
 <meta property="og:image" content="https://starlight-energy.github.io/fotos/logo.png">
 <meta name="theme-color" content="#1c3667">
 
-<link rel="stylesheet" href="estilos.css?v=6">
+<link rel="stylesheet" href="estilos.css?v=7">
 <link rel="icon" href="fotos/logo.png">
 
 <script>
@@ -37,6 +37,8 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     </ul>
   </div>
 </nav>
+
+<section id="cartel-oferta" class="cartel-oferta" hidden aria-live="polite" aria-label="Oferta"></section>
 
 <noscript><div class="contenedor"><p class="nojs">Su navegador tiene JavaScript desactivado y algunas funciones del sitio no van a funcionar. Escríbanos por WhatsApp al +53 63918876 y le atendemos igual.</p></div></noscript>
 
@@ -67,7 +69,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
 <script data-goatcounter="https://starlight-energy.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
-<script src="carrito.js?v=5"></script>
+<script src="carrito.js?v=6"></script>
 <script>
 (function(){
   function agregarCompartir(cont, nombre, id){
@@ -92,6 +94,10 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     var stock = (s === null || s === "") ? null : parseInt(s, 10);
     var pn = cont.getAttribute("data-precio-num");
     var precio = (pn === null || pn === "") ? null : parseFloat(pn);
+    var nn = cont.getAttribute("data-precio-normal");
+    var precioNormal = (nn === null || nn === "") ? null : parseFloat(nn);
+    var fo = cont.getAttribute("data-fin-oferta");
+    var finOferta = (fo === null || fo === "") ? null : Number(fo);
 
     if (stock !== null && stock <= 0){
       cont.innerHTML = "";
@@ -124,7 +130,7 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     var btn = cont.querySelector(".btn-agregar");
     btn.addEventListener("click", function(){
       var cant = clamp();
-      Carrito.agregar(id, {nombre:nombre, articulo:articulo, precio:precio, tope:stock}, cant);
+      Carrito.agregar(id, {nombre:nombre, articulo:articulo, precio:precio, tope:stock, precioNormal:precioNormal, finOferta:finOferta}, cant);
       try{ if(window.goatcounter && goatcounter.count) goatcounter.count({path:"evento/agregar-"+id, title:"Agregar: "+nombre, event:true}); }catch(e){}
       btn.textContent = "✓ Agregado";
       btn.classList.add("ok");
@@ -199,7 +205,8 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       cuerpo.appendChild(info);
     }
 
-    var ofertaTexto = Carrito.celda(c, enc, "oferta", 11).trim();
+    var o = Carrito.ofertaDe(c, enc, Date.now());
+    var ofertaTexto = o.activa ? o.etiqueta : "";
     if (ofertaTexto){
       var oferta = document.createElement("div");
       oferta.className = "oferta-producto";
@@ -223,21 +230,70 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     return article;
   }
 
+  function oculto(tag, texto){
+    var el = document.createElement(tag);
+    el.textContent = texto;
+    el.setAttribute("aria-hidden", "true");
+    return el;
+  }
+
+  function lector(texto){
+    var el = document.createElement("span");
+    el.className = "solo-lector";
+    el.textContent = texto;
+    return el;
+  }
+
+  function pintarPrecio(pEl, o, precioTxt, precioNum){
+    pEl.textContent = "";
+    if (o.tachado){
+      var s = oculto("s", Carrito.usd(o.antes));
+      s.className = "precio-antes";
+      var nuevo = oculto("span", Carrito.usd(o.precio));
+      nuevo.className = "precio-oferta";
+      var ahorro = oculto("span", "Ahorra " + Carrito.usd(o.antes - o.precio));
+      ahorro.className = "ahorro";
+      pEl.appendChild(s);
+      pEl.appendChild(document.createTextNode(" "));
+      pEl.appendChild(nuevo);
+      pEl.appendChild(document.createTextNode(" "));
+      pEl.appendChild(ahorro);
+      pEl.appendChild(lector("Antes " + Carrito.usd(o.antes) + ", ahora " + Carrito.usd(o.precio) + "."));
+      return;
+    }
+    if (precioTxt){ pEl.textContent = (precioNum !== null) ? (precioTxt + " USD") : precioTxt; }
+    else { pEl.innerHTML = "<em>Precio del día por WhatsApp</em>"; }
+  }
+
   // desdeCache = true cuando la lista es la guardada: nunca promete
   // "vienen en camino" (D44) ni olvida un aviso anotado.
   function finalizar(c, enc, desdeCache){
     var id = c[0].trim().toLowerCase();
-    var precioTxt = (c[2] || "").trim();
+    var o = Carrito.ofertaDe(c, enc, Date.now());
+    var precioTxt = o.precioTexto;
     var stock = parseInt((c[3] || "").trim(), 10);
     var pEl = document.querySelector('[data-precio="' + id + '"]');
     var badge = document.querySelector('[data-stock="' + id + '"]');
     var cont = document.querySelector('[data-acciones="' + id + '"]');
 
-    var precioNum = Carrito.precioNum(precioTxt);
+    var precioNum = o.precio;
     cont.setAttribute("data-precio-num", precioNum === null ? "" : precioNum);
+    cont.setAttribute("data-precio-normal", o.tachado ? o.antes : "");
+    cont.setAttribute("data-fin-oferta", (o.activa && o.finMs) ? o.finMs : "");
     if (pEl){
-      if (precioTxt){ pEl.textContent = (precioNum !== null) ? (precioTxt + " USD") : precioTxt; }
-      else { pEl.innerHTML = "<em>Precio del día por WhatsApp</em>"; }
+      pintarPrecio(pEl, o, precioTxt, precioNum);
+      var previa = pEl.nextSibling;
+      if (previa && previa.className === "cuenta-oferta") previa.parentNode.removeChild(previa);
+      if (o.activa && o.finMs){
+        var cuenta = document.createElement("div");
+        cuenta.className = "cuenta-oferta";
+        cuenta.appendChild(oculto("span", "⏰ Termina en "));
+        var num = oculto("span", Carrito.cuentaRegresiva(o.finMs - Date.now()));
+        num.setAttribute("data-fin-ms", o.finMs);
+        cuenta.appendChild(num);
+        cuenta.appendChild(lector(Carrito.textoFinLector(o.finTexto)));
+        pEl.parentNode.insertBefore(cuenta, pEl.nextSibling);
+      }
     }
 
     if (!isNaN(stock)){
@@ -279,7 +335,29 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
 
   var lista = document.getElementById("lista-productos");
   var estado = document.getElementById("estado-catalogo");
+  var cartel = document.getElementById("cartel-oferta");
   var filas = [];
+  var pintadas = { filas: [], enc: null, desdeCache: false };
+
+  function pintarCartel(){
+    var b = Carrito.bannerOfertas(pintadas.filas, pintadas.enc, Date.now());
+    Carrito.pintarCartel(cartel, b, b ? "#" + b.primerId : "#");
+  }
+
+  function alVencer(){
+    pintadas.filas.forEach(function(c){
+      try {
+        var id = String(c[0] || "").trim().toLowerCase();
+        var art = document.getElementById(id);
+        if (!art) return;
+        var o = Carrito.ofertaDe(c, pintadas.enc, Date.now());
+        var etq = art.querySelector(".oferta-producto");
+        if (etq && !o.activa) etq.parentNode.removeChild(etq);
+        finalizar(c, pintadas.enc, pintadas.desdeCache);
+      } catch(e){}
+    });
+    pintarCartel();
+  }
 
   // D44: la lista guardada lleva su antigüedad arriba, sea cual sea.
   function avisarCache(fecha){
@@ -293,14 +371,18 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     var cached = Carrito.leerCacheCatalogo();
     if (!(cached && cached.filas.length)) return false;
     lista.innerHTML = "";
+    var visibles = [];
     cached.filas.forEach(function(c){
       if (!(c && String(c[0] || "").trim())) return;
       if (Carrito.esOculto(c, cached.encabezado)) return;
+      visibles.push(c);
       lista.appendChild(construirProducto(c, cached.encabezado));
       finalizar(c, cached.encabezado, true);
     });
     avisarCache(cached.fecha);
     construirFiltros();
+    pintadas = { filas: visibles, enc: cached.encabezado, desdeCache: true };
+    try { pintarCartel(); } catch(e){}
     return true;
   }
 
@@ -318,6 +400,8 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       estado.hidden = true;
       Carrito.guardarCacheCatalogo(filas, enc);
       construirFiltros();
+      pintadas = { filas: filas, enc: enc, desdeCache: false };
+      try { pintarCartel(); } catch(e){}
       return;
     }
     if (mostrarDesdeCache()){
@@ -346,6 +430,8 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
       estado.hidden = false;
     }
   }, {encabezado:["id","producto","precio","stock"]});
+
+  Carrito.relojOfertas(alVencer);
 })();
 </script>
 
