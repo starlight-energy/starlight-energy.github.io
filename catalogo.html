@@ -386,6 +386,14 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxJfbMzWdCAZn0d9-gT
     return true;
   }
 
+  try {
+    var guardadaCartel = Carrito.leerCacheCatalogo();
+    if (guardadaCartel && guardadaCartel.filas.length) {
+      var cartelCache = Carrito.bannerOfertas(guardadaCartel.filas, guardadaCartel.encabezado, Date.now());
+      Carrito.pintarCartel(cartel, cartelCache, cartelCache ? "#" + cartelCache.primerId : "#");
+    }
+  } catch(e){}
+
   estado.textContent = "Cargando productos…";
   estado.hidden = false;
 

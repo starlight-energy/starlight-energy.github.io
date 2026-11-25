@@ -571,6 +571,12 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
   exigir(o.activa && !o.tachado && o.antes === null, "sin precio_antes: solo etiqueta");
   o = of(fila51("sumry", "310", 5, { oferta: "BF", fin: "2026-11-30", antes: "310" }), ENC51);
   exigir(o.activa && !o.tachado && o.finMs === FIN, "antes <= precio: sin tachado, con cuenta");
+  for (const raro of ["330,50", "6000", "0"]) {
+    o = of(fila51("sumry", "310", 5, { oferta: "BF", fin: "2026-11-30", antes: raro }), ENC51);
+    exigir(o.activa && !o.tachado && o.antes === null, `precio_antes raro ${raro}: solo etiqueta`);
+    o = of(fila51("sumry", "310", 5, { oferta: "BF", fin: "2026-11-30", antes: raro }), ENC51, FIN);
+    exigir(o.termino && o.precio === 310 && o.precioTexto === "310", `precio_antes raro ${raro}: al terminar queda el de la hoja, como el servidor`);
+  }
   o = of(fila51("sumry", "Consultar", 5, { oferta: "BF", fin: "2026-11-30", antes: "330" }), ENC51);
   exigir(o.activa && !o.tachado && o.precio === null && o.precioTexto === "Consultar", "precio Consultar: sin tachado");
   o = of(fila51("sumry", "Consultar", 5, { oferta: "BF", fin: "2026-11-30", antes: "330" }), ENC51, FIN);
@@ -598,9 +604,11 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
     fila51("", "50", 2, { oferta: "Vacía", fin: "2026-11-27" })
   ];
   let b = C.bannerOfertas(filasB, ENC51, Z("2026-11-24T12:00:00-05:00"));
-  exigir(b && b.titulo === "Black Friday" && b.n === 4 && b.conTachado === 4 && b.ahorroMax === 50 && b.finMs === Z("2026-11-29T05:00:00Z") && b.primerId === "sumry" && b.finTexto === "2026-11-28", `bannerOfertas: ${JSON.stringify(b)}`);
+  exigir(b && b.titulo === "Black Friday" && b.n === 3 && b.conTachado === 3 && b.ahorroMax === 50 && b.finMs === FIN && b.primerId === "sumry" && b.finTexto === "2026-11-30", `bannerOfertas: solo cuenta la etiqueta del título: ${JSON.stringify(b)}`);
+  b = C.bannerOfertas([fila51("g", "5", 2, { oferta: "Envío gratis", fin: "2026-11-26" })].concat(filasB.slice(0, 3)), ENC51, Z("2026-11-24T12:00:00-05:00"));
+  exigir(b.titulo === "Black Friday" && b.n === 3 && b.finMs === FIN && b.primerId === "sumry", `otra etiqueta con fin más temprano no cambia la cuenta: ${JSON.stringify(b)}`);
   b = C.bannerOfertas([fila51("a", "10", 2, { oferta: "Uno", fin: "2026-11-30" }), fila51("b", "10", 2, { oferta: "Dos", fin: "2026-11-28" })], ENC51, ANTES_FIN - 3 * 86400000);
-  exigir(b.titulo === "Dos" && b.conTachado === 0 && b.ahorroMax === 0 && b.primerId === "a", `empate por fin: ${JSON.stringify(b)}`);
+  exigir(b.titulo === "Dos" && b.n === 1 && b.conTachado === 0 && b.ahorroMax === 0 && b.primerId === "b", `empate por fin: ${JSON.stringify(b)}`);
   b = C.bannerOfertas([fila51("a", "10", 2, { oferta: "Uno", fin: "2026-11-30" }), fila51("b", "10", 2, { oferta: "Dos", fin: "2026-11-30" })], ENC51, ANTES_FIN);
   exigir(b.titulo === "Uno", "empate total: el primero");
   exigir(C.bannerOfertas([fila51("a", "10", 2, { oferta: "Uno" })], ENC51, ANTES_FIN) === null, "sin fechas: sin cartel");
@@ -675,7 +683,7 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
   cartelDoc.hidden = true;
   const bc = C.bannerOfertas(filasB, ENC51, Z("2026-11-24T12:00:00-05:00"));
   C.pintarCartel(cartelDoc, bc, "catalogo.html#sumry");
-  exigir(!cartelDoc.hidden && cartelDoc.children[0].textContent === "🔥 Black Friday" && cartelDoc.children[1].textContent === "4 productos rebajados · hasta 50 USD menos", `cartel: ${cartelDoc.textContent}`);
+  exigir(!cartelDoc.hidden && cartelDoc.children[0].textContent === "🔥 Black Friday" && cartelDoc.children[1].textContent === "3 productos rebajados · hasta 50 USD menos", `cartel: ${cartelDoc.textContent}`);
   const fila3 = cartelDoc.children[2];
   exigir(fila3.children[0].atributos["aria-hidden"] === "true" && fila3.children[0].textContent === "Termina en " && fila3.children[1].atributos["data-fin-ms"] === String(bc.finMs) && fila3.children[1].atributos["aria-hidden"] === "true" && fila3.children[2].className === "solo-lector", "cartel: la cuenta no se anuncia y el lector oye T5");
   exigir(cartelDoc.children[3].textContent === "Ver ofertas →" && cartelDoc.children[3].href === "catalogo.html#sumry", "cartel: botón T22");
@@ -699,6 +707,9 @@ console.log("✓ carrito: el tope de stock limita la cantidad al agregar");
   exigir(!/c\[11\]/.test(indexHtml) && /construirPrevia\(c, enc\)/.test(indexHtml), "index.html: la oferta por nombre, no por posición");
   const codigoSitio = ["carrito.js", "index.html", "catalogo.html", "pedido.html"].map(leer).join("\n");
   exigir(!/-05:00|5 \* 3600|18000000/.test(codigoSitio) && (codigoSitio.match(/America\/Havana/g) || []).length === 1, "sin desfases fijos; la zona en un solo lugar");
+  const catHtml = leer("catalogo.html");
+  exigir(catHtml.indexOf("Carrito.leerCacheCatalogo()") > -1 && catHtml.indexOf("cartelCache") > -1 && catHtml.indexOf("cartelCache") < catHtml.indexOf('estado.textContent = "Cargando productos…"'), "catálogo: el cartel se pinta desde la caché antes de leer la hoja (no salta)");
+  exigir(/prefers-reduced-motion: reduce\)\{html\{scroll-behavior:auto\}/.test(css) && /\.producto\{[^}]*scroll-margin-top:72px/.test(css), "estilos.css: sin desplazamiento animado con movimiento reducido y el producto no queda bajo el nav");
   console.log("✓ páginas v51: cartel, colores con contraste, versiones y cableado de ofertas");
 
   console.log("TODO OK");

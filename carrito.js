@@ -455,6 +455,7 @@
   }
 
   var ZONA_OFERTAS = "America/Havana";
+  var PRECIO_MAXIMO_RAZONABLE = 5000;
 
   function desfaseZona(ms) {
     ms = Math.round(ms / 1000) * 1000;
@@ -526,6 +527,7 @@
       var etiqueta = celda(fila, enc, "oferta", 11).trim();
       if (!etiqueta) return base;
       var antes = precioNum(celda(fila, enc, "precio_antes"));
+      if (antes !== null && !(antes > 0 && antes <= PRECIO_MAXIMO_RAZONABLE)) antes = null;
       var finTexto = celda(fila, enc, "oferta_fin").trim();
       var finMs = finOferta(finTexto);
       var tope = celda(fila, enc, "oferta_tope").trim();
@@ -545,30 +547,35 @@
   function bannerOfertas(filas, enc, ahora) {
     try {
       if (typeof ahora !== "number") ahora = Date.now();
-      var cuenta = {}, orden = [], b = null;
+      var cuenta = {}, orden = [], activas = [];
       (filas || []).forEach(function (c) {
         var id = String(c && c[0] != null ? c[0] : "").trim().toLowerCase();
         if (!id || esOculto(c, enc)) return;
         var o = ofertaDe(c, enc, ahora);
         if (!o.activa || o.finMs === null) return;
-        if (!b) b = { titulo: "", n: 0, conTachado: 0, ahorroMax: 0, finMs: o.finMs, finTexto: o.finTexto, primerId: id };
+        activas.push({ id: id, o: o });
+        if (!cuenta[o.etiqueta]) { cuenta[o.etiqueta] = { n: 0, fin: o.finMs }; orden.push(o.etiqueta); }
+        cuenta[o.etiqueta].n++;
+        cuenta[o.etiqueta].fin = Math.min(cuenta[o.etiqueta].fin, o.finMs);
+      });
+      if (!activas.length) return null;
+      var mejor = orden[0];
+      orden.forEach(function (e) {
+        var a = cuenta[e], m = cuenta[mejor];
+        if (a.n > m.n || (a.n === m.n && a.fin < m.fin)) mejor = e;
+      });
+      var b = null;
+      activas.forEach(function (x) {
+        var o = x.o;
+        if (o.etiqueta !== mejor) return;
+        if (!b) b = { titulo: mejor, n: 0, conTachado: 0, ahorroMax: 0, finMs: o.finMs, finTexto: o.finTexto, primerId: x.id };
         b.n++;
         if (o.tachado) {
           b.conTachado++;
           b.ahorroMax = Math.max(b.ahorroMax, Math.round((o.antes - o.precio) * 100) / 100);
         }
         if (o.finMs < b.finMs) { b.finMs = o.finMs; b.finTexto = o.finTexto; }
-        if (!cuenta[o.etiqueta]) { cuenta[o.etiqueta] = { n: 0, fin: o.finMs }; orden.push(o.etiqueta); }
-        cuenta[o.etiqueta].n++;
-        cuenta[o.etiqueta].fin = Math.min(cuenta[o.etiqueta].fin, o.finMs);
       });
-      if (!b) return null;
-      var mejor = orden[0];
-      orden.forEach(function (e) {
-        var a = cuenta[e], m = cuenta[mejor];
-        if (a.n > m.n || (a.n === m.n && a.fin < m.fin)) mejor = e;
-      });
-      b.titulo = mejor;
       return b;
     } catch (e) {
       return null;

@@ -129,22 +129,27 @@ COPIA DE SEGURIDAD DE TU HOJA (semanal y automática)
    editor de Apps Script; después no hay que tocarlo más.)
 
 OFERTAS CON PRECIO TACHADO Y CUENTA REGRESIVA (v51)
-  En el panel, para cada producto de la oferta:
-  1. Toca "Cambiar" en el precio y escribe el precio rebajado
-     (por ejemplo 310). Guardar.
-  2. Toca "Editar" y llena:
+  En el panel, para cada producto de la oferta, toca "Editar" en su
+  tarjeta (si no ves "Editar": Más -> Agregar y editar productos) y
+  llena, todo en el mismo formulario:
      - Oferta: el nombre de la oferta, igual en todos los productos
        (por ejemplo: Black Friday). Ese nombre sale en el cartel.
      - Último día de la oferta: la fecha. Termina a las 11:59 p. m.
        de ese día, hora de Cuba.
-     - Precio normal: el precio de antes (por ejemplo 330). Tiene
-       que ser mayor que el precio de ahora.
+     - Precio normal: el precio de ahora, el de antes de la rebaja
+       (por ejemplo 330).
+     - Precio de oferta: el precio rebajado (por ejemplo 310). Al
+       guardar, el producto pasa a ese precio; no hace falta "Cambiar".
      Guardar.
+  Mejor cargarla de noche (después de las 9 p. m.) o toda seguida:
+  el sitio la muestra enseguida y el canal de Telegram avisa una
+  sola vez, a la mañana siguiente, con todos los productos juntos.
   En el sitio sale un cartel negro con la cuenta regresiva y, en cada
   producto, el precio viejo tachado y el nuevo en rojo.
   Al terminar, el sitio vuelve solo al precio normal en ese momento;
-  la hoja y el panel, en menos de una hora. A las 9 de la mañana el
-  canal recibe un aviso de que terminó.
+  la hoja y el panel, en menos de una hora (o enseguida, si abres el
+  panel). A las 8 de la mañana el canal recibe un aviso de que
+  terminó.
   Para terminarla antes: Editar, borra "Oferta" y Guardar: el
   producto vuelve al precio normal enseguida.
   Si dejas "Precio normal" vacío, la oferta sale solo con la
